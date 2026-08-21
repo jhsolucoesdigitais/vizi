@@ -1,0 +1,16 @@
+{
+  "name": "VIZI | Vendas e Serviços",
+  "short_name": "VIZI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/assets/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

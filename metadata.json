@@ -1,0 +1,7 @@
+{
+  "name": "VIZI",
+  "description": "Uma plataforma completa de delivery e serviços exclusiva para condomínios, integrando moradores e parceiros locais.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

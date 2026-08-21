@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <title>VIZI | Vendas e Serviços</title>
+    <meta name="description" content="A plataforma completa de vendas e serviços exclusiva para o seu condomínio. Peça de forma fácil e rápida!" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="VIZI | Vendas e Serviços" />
+    <meta property="og:description" content="Acesse o catálogo de produtos e serviços disponíveis agora no seu condomínio. Praticidade a um clique!" />
+    <meta property="og:image" content="https://appvizi.netlify.app/assets/logo.png" /> <meta property="og:url" content="https://appvizi.netlify.app/" />
+    <meta property="og:site_name" content="VIZI" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="VIZI | Vendas e Serviços" />
+    <meta name="twitter:description" content="Tudo o que você precisa dentro do seu condomínio." />
+    <meta name="twitter:image" content="https://appvizi.netlify.app/assets/logo.png" />
+
+    <link rel="icon" type="image/png" href="/assets/logo.png" />
+    <link rel="apple-touch-icon" href="/assets/logo.png" />
+    <meta name="theme-color" content="#ffffff" />
+	<script>
+      window.deferredPWA = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredPWA = e;  
+      });
+    </script>
+	
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
