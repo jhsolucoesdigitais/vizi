@@ -226,7 +226,8 @@ export function useAuthHandlers({
       const inputFloor        = parseInt(fd.get('floor')     as string) || 0;
       const inputApartment    = parseInt(fd.get('apartment') as string) || 0;
 
-      // Cria/reaproveita a vaga do apartamento e a conta de acesso (fantasma) vinculada a ela
+      // Cria/reaproveita a vaga do apartamento e a conta de acesso (fantasma) vinculada a ela.
+      // whatsappRaw só é usado pela função para gerar um verificador (hash) — nunca é persistido em texto puro.
       const { data: result, error: fnError } = await supabase.functions.invoke('resident-login', {
         body: {
           condominioId: currentCondo.id,
@@ -235,11 +236,17 @@ export function useAuthHandlers({
           apartment:    inputApartment,
           name:         inputName,
           whatsapp:     encryptedWhatsApp,
+          whatsappRaw:  rawWhatsApp,
         },
       });
 
       if (fnError || result?.error) {
-        throw new Error(result?.error || fnError?.message || 'Falha ao processar login.');
+        let message = result?.error || fnError?.message || 'Falha ao processar login.';
+        const ctx = (fnError as any)?.context;
+        if (ctx?.json) {
+          try { message = (await ctx.json())?.error || message; } catch { /* mantém a mensagem padrão */ }
+        }
+        throw new Error(message);
       }
 
       // Troca o token gerado pela função por uma sessão real do Supabase Auth
@@ -253,9 +260,9 @@ export function useAuthHandlers({
       setTempUser(result.usuario as User);
       setView('confirm-login');
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao processar login:', err);
-      Swal.fire('Erro', 'Falha ao processar dados de acesso.', 'error');
+      Swal.fire('Erro', err?.message || 'Falha ao processar dados de acesso.', 'error');
     } finally {
       setIsGlobalLoading(false);
     }
@@ -330,7 +337,8 @@ export function useAuthHandlers({
         : [...user.favorites, bizId],
     };
 
-    await dbInstance.put('usuarios', updated);
+    // update (não upsert): a vaga do morador já existe, e upsert exigiria permissão de INSERT
+    await supabase.from('usuarios').update({ favorites: updated.favorites }).eq('id', updated.id);
     setUser(updated);
     localStorage.setItem('maxi_user_v3', JSON.stringify(updated));
 

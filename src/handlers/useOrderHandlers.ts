@@ -3,6 +3,17 @@ import { supabase } from "../../db";
 import { User, Business, Product, CartItem, Order, PaymentMethod } from '../types';
 import { ViewType } from './useAppState';
 
+// Escapa texto controlado pelo lojista/usuário antes de interpolar em templates `html:` do SweetAlert2
+// (que renderiza HTML de verdade, não texto — sem isso vira um vetor de XSS armazenado).
+function escapeHtml(value: string): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ─────────────────────────────────────────────
 //  Tipos
 // ─────────────────────────────────────────────
@@ -212,14 +223,14 @@ export function useOrderHandlers({
           <div class="space-y-1">
             <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Forma de Pagamento</label>
             <select id="swal-payment" class="w-full bg-slate-100 border-none rounded-xl p-4 font-bold outline-none">
-              ${metodosAceitos.map((m: string) => `<option value="${m}">${m}</option>`).join('')}
+              ${metodosAceitos.map((m: string) => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('')}
             </select>
           </div>
 
           <div id="pix-container" class="hidden animate-in fade-in zoom-in-95">
             <button type="button" id="btn-copy-pix" class="w-full bg-emerald-50 text-emerald-700 border-2 border-emerald-200 p-4 rounded-2xl flex flex-col items-center gap-1 group active:scale-95 transition-all outline-none">
               <span class="text-[10px] font-black uppercase tracking-widest">Clique para Copiar PIX</span>
-              <span class="text-xs font-bold break-all">${selectedBusiness.pagamento.chavePix}</span>
+              <span class="text-xs font-bold break-all">${escapeHtml(selectedBusiness.pagamento.chavePix)}</span>
               <div class="mt-2 bg-emerald-600 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase">Copiar Chave</div>
             </button>
           </div>
@@ -326,15 +337,9 @@ export function useOrderHandlers({
 
       await supabase.from('pedidos').insert(order);
 
-      // ── 7. Atualiza pontos do usuário ─────────────
-      const newPoints = { ...user.points };
-      if (appliedLoyalty) {
-        newPoints[selectedBusiness.id] = Math.max(0, userPoints - selectedBusiness.loyalty.metaPontos);
-      }
-      newPoints[selectedBusiness.id] = (newPoints[selectedBusiness.id] || 0) + pointsEarned;
-
-      await supabase.from('usuarios').update({ points: newPoints }).eq('id', user.id);
-      const updatedUser = { ...user, points: newPoints };
+      // ── 7. Atualiza pontos do usuário (recalculado no servidor via RPC) ──
+      const { data: newPoints } = await supabase.rpc('apply_checkout_loyalty', { input_order_id: orderId });
+      const updatedUser = { ...user, points: newPoints || user.points };
       setUser(updatedUser);
       localStorage.setItem('maxi_user_v3', JSON.stringify(updatedUser));
 

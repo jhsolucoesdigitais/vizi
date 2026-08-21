@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",
-    "bcryptjs": "^3.0.3",
     "crypto-js": "^4.2.0",
     "framer-motion": "^12.27.5",
     "lucide-react": "^0.562.0",
@@ -20,7 +19,6 @@
     "sweetalert2": "^11.10.0"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.17",

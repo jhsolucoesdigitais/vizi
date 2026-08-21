@@ -13,6 +13,20 @@ interface SuperAdminPanelProps {
   onBack: () => void;
 }
 
+// supabase-js só preenche `data` em respostas 2xx; em erro (ex: 409), a mensagem
+// que a Edge Function mandou só existe dentro de `error.context` (a Response crua).
+async function getFunctionErrorMessage(result: any, error: any, fallback: string): Promise<string> {
+  if (result?.error) return result.error;
+  const ctx = error?.context;
+  if (ctx?.json) {
+    try {
+      const body = await ctx.json();
+      if (body?.error) return body.error;
+    } catch { /* mantém o fallback */ }
+  }
+  return error?.message || fallback;
+}
+
 const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
   // ── Estados Globais ───────────────────────────
   const [isLogged,       setIsLogged]       = useState(false);
@@ -150,16 +164,33 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
       const newEmail = fd.get('email') as string;
       const emailChanged = newEmail !== editingStore.email;
 
+      const tipoPlano      = fd.get('tipoPlano') as string;
+      const licenseStatus  = fd.get('licenseStatus') as string;
+      const dataVencimento = (fd.get('dataVencimento') as string) || null;
+
       const updated = {
         ...editingStore,
         name:          fd.get('name') as string,
         email:         newEmail,
         category:      fd.get('category') as any,
-        tipoPlano:     fd.get('tipoPlano') as string,
-        licenseStatus: fd.get('licenseStatus') as any,
-        dataVencimento: fd.get('dataVencimento') as string || null,
+        tipoPlano,
+        licenseStatus,
+        dataVencimento,
       };
-      await dbInstance.put('empresas', updated);
+
+      // Campos operacionais: o próprio lojista também pode editar essas colunas.
+      await supabase
+        .from('empresas')
+        .update({ name: updated.name, email: newEmail, category: updated.category })
+        .eq('id', editingStore.id);
+
+      // Cobrança/licença: só o master admin pode mexer — via RPC dedicada.
+      await supabase.rpc('admin_update_business_billing', {
+        input_business_id: editingStore.id,
+        input_license_status: licenseStatus,
+        input_data_vencimento: dataVencimento,
+        input_tipo_plano: tipoPlano,
+      });
 
       // Se o email de login mudou, atualiza também a conta de acesso (Auth)
       if (emailChanged) {
@@ -206,7 +237,8 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
       });
 
       if (authError || authResult?.error) {
-        Swal.fire('Loja criada, mas houve falha ao gerar o acesso', authResult?.error || authError?.message || 'Tente novamente pela edição da loja.', 'warning');
+        const message = await getFunctionErrorMessage(authResult, authError, 'Tente novamente pela edição da loja.');
+        Swal.fire('Loja criada, mas houve falha ao gerar o acesso', message, 'warning');
       } else {
         Swal.fire('Loja Criada!', `Login: ${email}\nSenha temporária: ${tempPass}`, 'success');
       }
@@ -240,7 +272,8 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
     });
 
     if (authError || authResult?.error) {
-      Swal.fire('Erro', authResult?.error || authError?.message || 'Falha ao gerar acesso.', 'error');
+      const message = await getFunctionErrorMessage(authResult, authError, 'Falha ao gerar acesso.');
+      Swal.fire('Erro', message, 'error');
     } else {
       Swal.fire('Acesso gerado!', `Login: ${store.email}\nSenha temporária: ${tempPass}`, 'success');
     }

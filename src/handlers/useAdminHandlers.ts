@@ -243,7 +243,10 @@ export function useAdminHandlers({
 
     const updatedBusiness = { ...adminBusiness, reviews: JSON.stringify(updatedReviews), rating: newRating };
 
-    const { error } = await supabase.from('empresas').update(updatedBusiness).eq('id', adminBusiness.id);
+    const { error } = await supabase
+      .from('empresas')
+      .update({ reviews: updatedBusiness.reviews, rating: updatedBusiness.rating })
+      .eq('id', adminBusiness.id);
     if (!error) {
       setAdminBusiness(updatedBusiness);
       Swal.fire({ icon: 'success', title: 'Removida!', timer: 800, showConfirmButton: false, toast: true, position: 'top-end' });
@@ -343,7 +346,23 @@ export function useAdminHandlers({
           delete (updated as any).phone;
       }
 
-      const { error } = await supabase.from('empresas').update(updated).eq('id', adminBusiness.id);
+      // Envia só as colunas operacionais que o lojista tem permissão de editar
+      // (licenseStatus/tipoPlano/dataVencimento são controlados só pelo master admin).
+      const { error } = await supabase
+        .from('empresas')
+        .update({
+          name: updated.name,
+          subCategory: updated.subCategory,
+          description: updated.description,
+          image: updated.image,
+          bannerUrl: updated.bannerUrl,
+          businessHours: updated.businessHours,
+          status: updated.status,
+          pagamento: updated.pagamento,
+          social: updated.social,
+          loyalty: updated.loyalty,
+        })
+        .eq('id', adminBusiness.id);
       
       if (error) throw error;
 
@@ -412,29 +431,8 @@ const handleAdminUpdateStatus = async (orderId: string, newStatus: OrderStatus) 
                   }
               }
 
-              const { data: orderUser } = await supabase
-                  .from('usuarios')
-                  .select('points')
-                  .eq('id', order.userId)
-                  .single();
-
-              if (orderUser) {
-                  let finalPoints = (orderUser.points[order.businessId] || 0) - order.pointsEarned;
-                  if (order.discount > 0) {
-                      const { data: biz } = await supabase
-                          .from('empresas')
-                          .select('loyalty')
-                          .eq('id', order.businessId)
-                          .single();
-                      if (biz?.loyalty?.ativo) finalPoints += (biz.loyalty.metaPontos || 0);
-                  }
-                  await supabase
-                      .from('usuarios')
-                      .update({ 
-                          points: { ...orderUser.points, [order.businessId]: Math.max(0, finalPoints) } 
-                      })
-                      .eq('id', order.userId);
-              }
+              // Estorno dos pontos recalculado no servidor via RPC (não confia em valores do cliente)
+              await supabase.rpc('admin_reverse_order_points', { input_order_id: orderId });
           }
 
           // 3. Atualizar o Pedido no Banco
@@ -510,12 +508,12 @@ const handleAdminFinalizeOrder = async (orderId: string) => {
       try {
           const order = adminOrders.find(o => o.id === orderId);
           if (!order) return;
-          await dbInstance.put('pedidos', { 
-              ...order, 
-              status: 'concluido', 
-              paymentStatus: 'pago', 
-              finishedAt: now 
-          });
+          // update (não upsert): upsert também exige permissão de INSERT, que só o morador tem
+          const { error } = await supabase
+              .from('pedidos')
+              .update({ status: 'concluido', paymentStatus: 'pago', finishedAt: now })
+              .eq('id', orderId);
+          if (error) throw error;
           Swal.fire({ icon: 'success', title: 'Concluído!', timer: 1000, toast: true, position: 'top-end', showConfirmButton: false });
       } catch (error) {
           refreshAdminData();
@@ -560,10 +558,12 @@ const handleAdminFinalizeOrder = async (orderId: string) => {
     }
   };
 
-  /** Faz upload de um arquivo para o bucket Supabase e retorna a URL pública. */
+  /** Faz upload de um arquivo para o bucket Supabase e retorna a URL pública.
+   *  O caminho inclui o id da empresa dona do arquivo — a policy do Storage exige
+   *  que esse segmento corresponda a uma empresa do usuário autenticado. */
   const uploadToStorage = async (file: File, folder: string): Promise<string | null> => {
     const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
-    const filePath = `${folder}/${fileName}`;
+    const filePath = `${folder}/${adminBusiness.id}/${fileName}`;
 
     const { error } = await supabase.storage.from('vizi-assets').upload(filePath, file);
     if (error) { console.error('Erro no upload:', error); return null; }
@@ -887,25 +887,13 @@ const handleEditClientPoints = async (userId: string, currentPoints: number) => 
       
       try {
         const newPoints = parseInt(newPointsStr);
-        
-        // 1. Busca os pontos atuais do usuário direto do banco
-        const { data: user, error: fetchError } = await supabase
-          .from('usuarios')
-          .select('points')
-          .eq('id', userId)
-          .single();
 
-        if (fetchError) throw fetchError;
-
-        // 2. Atualiza apenas os pontos DESTA empresa
-        const updatedPoints = user?.points || {};
-        updatedPoints[adminBusiness.id] = newPoints;
-
-        // 3. Salva no banco
-        const { error: updateError } = await supabase
-          .from('usuarios')
-          .update({ points: updatedPoints })
-          .eq('id', userId);
+        // Atualização validada no servidor via RPC (garante que a loja só edita clientes do próprio condomínio)
+        const { error: updateError } = await supabase.rpc('admin_set_client_points', {
+          input_user_id: userId,
+          input_business_id: adminBusiness.id,
+          input_new_points: newPoints,
+        });
 
         if (updateError) throw updateError;
 
