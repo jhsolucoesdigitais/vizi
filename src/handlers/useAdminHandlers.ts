@@ -268,6 +268,8 @@ export function useAdminHandlers({
     const newName        = (document.getElementById('edit-business-name')        as HTMLInputElement)?.value  || adminBusiness.name;
     const newSubCategory = (document.getElementById('edit-business-subcategory') as HTMLInputElement)?.value  || adminBusiness.subCategory;
     const newDescription = (document.getElementById('edit-business-description') as HTMLTextAreaElement)?.value || adminBusiness.description;
+    const rawSlug        = (document.getElementById('edit-business-slug')       as HTMLInputElement)?.value  || '';
+    const newSlug         = rawSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || null;
     const whatsappClean  = whatsappValue.replace(/\D/g, '');
 
     if (whatsappClean.length < 11) { 
@@ -362,10 +364,18 @@ export function useAdminHandlers({
           pagamento: updated.pagamento,
           social: updated.social,
           loyalty: updated.loyalty,
+          slug: newSlug,
         })
         .eq('id', adminBusiness.id);
-      
-      if (error) throw error;
+
+      if (error) {
+        if ((error as any).code === '23505') {
+          Swal.fire('Slug já em uso', 'Esse link já está sendo usado por outra loja do condomínio. Escolha outro.', 'warning');
+          return;
+        }
+        throw error;
+      }
+      updated.slug = newSlug || undefined;
 
       setAdminBusiness(updated);
       setLogoFile(null);

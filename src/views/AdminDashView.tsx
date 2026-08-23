@@ -1681,6 +1681,31 @@ export default function AdminDashView(props: AdminDashViewProps) {
                   </div>
                 </div>
                 <div className="space-y-1">
+                  <label className="text-[10px] font-semibold uppercase tracking-wide text-ink-400 ml-1">Slug (link curto para compartilhar)</label>
+                  <div className="flex gap-2">
+                    <input
+                      id="edit-business-slug"
+                      defaultValue={adminBusiness.slug || ''}
+                      placeholder="ex: pizzaria-do-joao"
+                      className="w-full bg-black/[0.03] rounded-xl p-3.5 text-sm font-medium outline-none focus:ring-[3px] focus:ring-brand-500/15 lowercase"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const condoSlug = adminCondo?.slug || new URLSearchParams(window.location.search).get('c') || 'maxi';
+                        const storeSlug = (document.getElementById('edit-business-slug') as HTMLInputElement)?.value.trim() || adminBusiness.id;
+                        const url = `${window.location.origin}/?c=${condoSlug}&storeId=${storeSlug}`;
+                        navigator.clipboard.writeText(url);
+                        Swal.fire({ toast: true, position: 'top-end', title: 'Link copiado!', showConfirmButton: false, timer: 1500, icon: 'success' });
+                      }}
+                      className="shrink-0 px-4 rounded-xl bg-brand-600 text-white text-[11px] font-semibold uppercase tracking-wide hover:bg-brand-700 active:scale-[0.97] transition-all"
+                    >
+                      Copiar Link
+                    </button>
+                  </div>
+                  <p className="text-[10px] font-medium text-ink-400 ml-1">Sem slug, o link usa um código longo. Salve as configurações depois de definir.</p>
+                </div>
+                <div className="space-y-1">
                   <label className="text-[10px] font-semibold uppercase tracking-wide text-ink-400 ml-1">Sobre a Loja</label>
                   <textarea id="edit-business-description" defaultValue={adminBusiness.description} placeholder="Conte um pouco sobre seu negócio..." className="w-full bg-black/[0.03] rounded-xl p-3.5 text-sm font-medium h-32 resize-none outline-none focus:ring-[3px] focus:ring-brand-500/15" />
                 </div>
