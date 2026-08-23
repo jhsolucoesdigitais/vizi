@@ -227,7 +227,7 @@ export function useAuthHandlers({
       const inputApartment    = parseInt(fd.get('apartment') as string) || 0;
 
       // Cria/reaproveita a vaga do apartamento e a conta de acesso (fantasma) vinculada a ela.
-      // whatsappRaw só é usado pela função para gerar um verificador (hash) — nunca é persistido em texto puro.
+      // Identidade = condomínio + unidade, de propósito sem depender do WhatsApp.
       const { data: result, error: fnError } = await supabase.functions.invoke('resident-login', {
         body: {
           condominioId: currentCondo.id,
@@ -236,7 +236,6 @@ export function useAuthHandlers({
           apartment:    inputApartment,
           name:         inputName,
           whatsapp:     encryptedWhatsApp,
-          whatsappRaw:  rawWhatsApp,
         },
       });
 
