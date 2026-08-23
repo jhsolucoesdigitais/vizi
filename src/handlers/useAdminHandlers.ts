@@ -326,10 +326,11 @@ export function useAdminHandlers({
             chavePix: chavePixValue, 
             metodosAceitos: metodos 
         },
-        social:   { 
-            instagram: fd.get('insta') as string, 
-            facebook: fd.get('fb') as string, 
-            whatsapp: whatsappClean 
+        social:   {
+            instagram: fd.get('insta') as string,
+            facebook: fd.get('fb') as string,
+            whatsapp: whatsappClean,
+            website: fd.get('website') as string,
         },
         loyalty:  { 
             ...adminBusiness.loyalty, 

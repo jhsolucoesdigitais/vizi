@@ -56,7 +56,7 @@ export default function LoginView({ currentCondo, setView, handleLoginSubmit }: 
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <img
-            src="/assets/logo.png"
+            src="/assets/web-app-manifest-512x512.png"
             alt="VIZI"
             className="h-24 w-auto object-contain"
           />

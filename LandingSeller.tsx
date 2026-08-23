@@ -78,7 +78,7 @@ useEffect(() => {
       <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/5 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="bg-white p-2 rounded-xl shadow-lg shadow-white/5">
-            <img src="/assets/logo.p.png" alt="VIZI" className="h-7 md:h-9 object-contain" />
+            <img src="/assets/web-app-manifest-512x512.png" alt="VIZI" className="h-7 md:h-9 object-contain" />
           </div>
           
           {/* O botão SÓ aparece se o usuário já acessou o app antes */}
@@ -464,7 +464,7 @@ useEffect(() => {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex flex-col items-center md:items-start gap-4">
             <div className="bg-white p-2 rounded-lg inline-block">
-                <img src="/assets/logo.p.png" alt="VIZI" className="h-6 object-contain" />
+                <img src="/assets/web-app-manifest-512x512.png" alt="VIZI" className="h-6 object-contain" />
             </div>
             <p className="text-slate-600 text-[9px] font-black uppercase tracking-[0.5em]">The Hyperlocal Marketplace System</p>
           </div>

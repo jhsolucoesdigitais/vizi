@@ -508,6 +508,16 @@ const handleFilterClients = async (forcedPage?: number) => {
     const faturamento = validOrders.reduce((acc, o) => acc + o.total, 0);
     const totalCancelado = ordersInPeriod.filter(o => o.status === 'cancelado').reduce((acc, o) => acc + o.total, 0);
 
+    // Período anterior equivalente (mesma duração, imediatamente antes)
+    const duration = end - start;
+    const prevEnd = start - 1;
+    const prevStart = prevEnd - duration;
+    const prevOrders = financeOrders.filter(o => {
+      const dataReferencia = (o.status === 'concluido' && o.finishedAt) ? o.finishedAt : o.createdAt;
+      return dataReferencia >= prevStart && dataReferencia <= prevEnd && o.status !== 'cancelado';
+    });
+    const faturamentoAnterior = prevOrders.reduce((acc, o) => acc + o.total, 0);
+
     return {
       faturamento,
       pendente: validOrders.filter(o => o.paymentStatus === 'pendente').reduce((acc, o) => acc + o.total, 0),
@@ -515,6 +525,7 @@ const handleFilterClients = async (forcedPage?: number) => {
       totalCancelado,
       pedidos: validOrders.length,
       ticketMedio: validOrders.length > 0 ? faturamento / validOrders.length : 0,
+      faturamentoAnterior,
       history: sortedOrders
     };
   }, [financeOrders, adminDateStart, adminDateEnd]);

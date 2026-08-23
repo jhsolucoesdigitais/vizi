@@ -62,6 +62,7 @@ export interface Business {
     instagram: string;
     facebook: string;
     whatsapp: string;
+    website?: string;
   };
   
   condominioId?: string;

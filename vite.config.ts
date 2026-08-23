@@ -19,8 +19,8 @@ export default defineConfig(({ mode }) => {
         
         VitePWA({
           registerType: 'autoUpdate',
-          includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
-          
+          includeAssets: ['assets/favicon.ico', 'assets/favicon.svg', 'assets/favicon-96x96.png', 'assets/apple-touch-icon.png'],
+
           // ── 1. RESTAURAMOS O MANIFESTO BASE (COMO NO SENSEI) ──
           manifest: {
             name: 'VIZI | Vendas e Serviços',
@@ -32,10 +32,22 @@ export default defineConfig(({ mode }) => {
             start_url: '/',
             icons: [
               {
-                src: '/assets/logo.png',
+                src: '/assets/web-app-manifest-192x192.png',
+                sizes: '192x192',
+                type: 'image/png',
+                purpose: 'maskable'
+              },
+              {
+                src: '/assets/web-app-manifest-512x512.png',
                 sizes: '512x512',
                 type: 'image/png',
-                purpose: 'any maskable'
+                purpose: 'maskable'
+              },
+              {
+                src: '/assets/apple-touch-icon.png',
+                sizes: '180x180',
+                type: 'image/png',
+                purpose: 'any'
               }
             ]
           },

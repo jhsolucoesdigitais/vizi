@@ -3,7 +3,7 @@ import { User, Business, Product, CartItem, Review } from '../types';
 import { ViewType } from '../hooks/useAppState';
 import { Stars, isStoreCurrentlyOpen } from '../components/shared';
 import { ProductDetailModal, StoreProductList } from '../components/StoreProducts';
-import { ChevronLeft, Share2, Heart, Star, MessageSquare, Info, Smartphone, Instagram, Facebook, Copy, ShieldAlert, ArrowLeft, Store } from 'lucide-react';
+import { ChevronLeft, Share2, Heart, Star, MessageSquare, Info, Smartphone, Instagram, Facebook, Copy, ShieldAlert, ArrowLeft, Store, Globe } from 'lucide-react';
 import Swal from 'sweetalert2';
  
 // ─────────────────────────────────────────────
@@ -133,6 +133,7 @@ export default function BusinessView({
 
   const hasWhatsapp  = !!selectedBusiness.social?.whatsapp?.trim();
   const hasInstagram = !!selectedBusiness.social?.instagram?.trim();
+  const hasWebsite   = !!selectedBusiness.social?.website?.trim();
   const hasPix       = !!selectedBusiness.pagamento?.chavePix?.trim();
 
   // ── BLOQUEIO DE INADIMPLÊNCIA ──
@@ -304,6 +305,11 @@ export default function BusinessView({
               {hasInstagram && (
                 <a href={`https://instagram.com/${selectedBusiness.social.instagram?.replace('@', '')}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[100px] max-w-[140px] justify-center bg-pink-50 text-pink-600 px-3 py-2.5 rounded-xl flex items-center gap-2 text-[11px] font-semibold hover:bg-pink-100 active:scale-[0.97] transition-all">
                   <Instagram className="w-4 h-4" /> Insta
+                </a>
+              )}
+              {hasWebsite && (
+                <a href={selectedBusiness.social.website?.startsWith('http') ? selectedBusiness.social.website : `https://${selectedBusiness.social.website}`} target="_blank" rel="noreferrer" className="flex-1 min-w-[100px] max-w-[140px] justify-center bg-brand-50 text-brand-700 px-3 py-2.5 rounded-xl flex items-center gap-2 text-[11px] font-semibold hover:bg-brand-100 active:scale-[0.97] transition-all">
+                  <Globe className="w-4 h-4" /> Site
                 </a>
               )}
               {hasPix && (

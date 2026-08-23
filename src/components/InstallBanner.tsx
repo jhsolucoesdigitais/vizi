@@ -73,7 +73,7 @@ export default function InstallBanner({ currentCondo }: InstallBannerProps) {
 
       document.title = appFullName;
 
-      const logoOriginal = currentCondo.logoUrl || '/assets/logo.png';
+      const logoOriginal = currentCondo.logoUrl || '/assets/web-app-manifest-512x512.png';
       const logoAbsoluto = logoOriginal.startsWith('http') ? logoOriginal : `${window.location.origin}${logoOriginal}`;
 
       // Injeção para o iOS (Apple)
