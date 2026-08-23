@@ -41,6 +41,8 @@ export default function CartView({
     }
 
     const subtotal = cart.reduce((acc, i) => acc + (i.product.price * i.quantity), 0);
+    const allQuoteOnly = cart.every(i => i.product.isQuoteOnly);
+    const hasQuoteOnly = cart.some(i => i.product.isQuoteOnly);
     const bizPointsBalance = user?.points?.[selectedBusiness.id] || 0;
     const canRedeem = selectedBusiness.loyalty?.ativo && bizPointsBalance >= selectedBusiness.loyalty.metaPontos;
     
@@ -203,11 +205,14 @@ export default function CartView({
                                     )}
                                 </div>
                                 <div className="flex justify-between items-end pt-1">
-                                    <p className="text-[11px] font-semibold text-ink-500 uppercase tracking-widest leading-none mb-1">Total a Pagar</p>
-                                    <p className="font-display text-3xl font-bold text-ink-900 tracking-tight leading-none tabular-nums">R$ {totalFinal.toFixed(2)}</p>
+                                    <p className="text-[11px] font-semibold text-ink-500 uppercase tracking-widest leading-none mb-1">{allQuoteOnly ? 'Valor' : 'Total a Pagar'}</p>
+                                    <p className="font-display text-3xl font-bold text-ink-900 tracking-tight leading-none tabular-nums">{allQuoteOnly ? 'Sob Consulta' : `R$ ${totalFinal.toFixed(2)}`}</p>
                                 </div>
+                                {hasQuoteOnly && (
+                                    <p className="text-[11px] font-medium text-ink-500 -mt-1">Itens sob consulta terão o preço combinado diretamente com a loja.</p>
+                                )}
                                 <button onClick={finalizeOrder} disabled={cart.length === 0 || !isOpen} className="w-full mt-3 bg-brand-600 text-white font-display font-semibold py-4 rounded-2xl shadow-lg shadow-brand-600/25 uppercase tracking-widest text-xs hover:bg-brand-700 active:scale-[0.98] transition-all disabled:opacity-50">
-                                    {isOpen ? (totalFinal === 0 ? 'Resgatar Agora' : 'Finalizar Pedido') : 'Loja Fechada'}
+                                    {isOpen ? (allQuoteOnly ? 'Solicitar Orçamento' : (totalFinal === 0 ? 'Resgatar Agora' : 'Finalizar Pedido')) : 'Loja Fechada'}
                                 </button>
                             </div>
                         </div>

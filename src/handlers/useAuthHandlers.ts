@@ -119,8 +119,8 @@ export function useAuthHandlers({
         // Carrega empresas e produtos do condomínio em paralelo
         const [bizRes, prodRes] = await Promise.all([
           supabase
-            .from('empresas')
-            .select('id, name, category, subCategory, rating, image, bannerUrl, businessHours, status, condominioId, social, loyalty, pagamento, reviews, tipoPlano, description, licenseStatus, "categoryOrder"')
+            .from('empresas_public')
+            .select('*')
 			.eq('condominioId', condo.id),
           supabase
             .from('produtos')

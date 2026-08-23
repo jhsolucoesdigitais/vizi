@@ -84,12 +84,8 @@ const { data, error } = await supabase
     try {
       const [bizRes, prodsRes, userRes] = await Promise.all([
         supabase
-          .from('empresas')
-          .select(`
-            id, name, category, subCategory, rating, image, bannerUrl,
-            businessHours, status, condominioId, social, loyalty,
-            pagamento, reviews, tipoPlano, description, "categoryOrder"
-          `)
+          .from('empresas_public')
+          .select('*')
           .eq('condominioId', currentCondo.id)
           .neq('licenseStatus', 'blocked'),
  
