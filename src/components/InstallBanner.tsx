@@ -11,6 +11,7 @@ export default function InstallBanner({ currentCondo }: InstallBannerProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
   // Estado para controlar se o banner flutuante está visível
   const [isVisible, setIsVisible] = useState(true);
 
@@ -26,6 +27,9 @@ export default function InstallBanner({ currentCondo }: InstallBannerProps) {
     // 2. Detecta iOS
     const userAgent = window.navigator.userAgent.toLowerCase();
     setIsIOS(/iphone|ipad|ipod/.test(userAgent));
+
+    // 2b. Detecta se é um dispositivo móvel (o botão de instalar não faz sentido no computador)
+    setIsMobileDevice(/android|iphone|ipad|ipod|mobile/.test(userAgent));
 
     // 3. Captura o evento de instalação (Android/PC)
     const trappedPrompt = (window as any).deferredPWA;
@@ -158,7 +162,7 @@ export default function InstallBanner({ currentCondo }: InstallBannerProps) {
     }
   };
 
-  if (isStandalone || !currentCondo || !isVisible) return null;
+  if (isStandalone || !currentCondo || !isVisible || !isMobileDevice) return null;
 
   return (
    <div className={`fixed bottom-8 right-4 md:right-8 z- w-[calc(100%-2rem)] max-w-[380px] p-4 rounded-[28px] shadow-2xl flex items-center justify-between animate-in slide-in-from-bottom-10 border ${

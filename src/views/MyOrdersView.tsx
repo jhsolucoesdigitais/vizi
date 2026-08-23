@@ -46,28 +46,28 @@ export default function MyOrdersView({ user, userOrders, businesses, setView }: 
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-10 font-sans text-left">
-      <header className="p-6 pt-12 bg-white border-b border-slate-100 flex items-center gap-4 sticky top-0 z-50 shadow-sm">
-        <button 
-          onClick={() => setView('dashboard')} 
-          className="p-3 bg-slate-50 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors border border-slate-100"
+    <div className="min-h-screen bg-cream-100 pb-10 font-sans text-left">
+      <header className="p-5 pt-11 bg-cream-50/90 backdrop-blur-md border-b border-black/[0.06] flex items-center gap-3.5 sticky top-0 z-50">
+        <button
+          onClick={() => setView('dashboard')}
+          className="p-2.5 bg-black/[0.04] rounded-xl text-ink-600 hover:bg-black/[0.07] active:scale-90 transition-all"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/>
           </svg>
         </button>
-        <h1 className="text-xl font-black italic uppercase tracking-tighter text-slate-800">Histórico Unidade</h1>
+        <h1 className="font-display text-lg font-semibold tracking-tight text-ink-900">Histórico Unidade</h1>
       </header>
 
-      <div className="p-6 space-y-6 max-w-2xl mx-auto">
+      <div className="p-5 space-y-4 max-w-2xl mx-auto">
         {/* Card da Unidade */}
-        <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 bg-red-600 text-white rounded-2xl flex items-center justify-center font-black italic text-lg shadow-lg">
+        <div className="bg-white p-5 rounded-[24px] border border-black/[0.05] shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-brand-600 text-white rounded-2xl flex items-center justify-center font-display font-semibold text-sm shadow-sm shadow-brand-600/25">
             {user.block}{user.floor}{user.apartment}
           </div>
           <div>
-            <h3 className="font-black text-slate-800 text-xs uppercase italic">Pedidos do Apartamento</h3>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+            <h3 className="font-semibold text-ink-900 text-[13px]">Pedidos do Apartamento</h3>
+            <p className="text-[11px] text-ink-500 font-medium">
               {filteredOrders.length} registros visíveis
             </p>
           </div>
@@ -90,57 +90,57 @@ export default function MyOrdersView({ user, userOrders, businesses, setView }: 
               const finishTime = o.finishedAt?.seconds ? o.finishedAt.seconds * 1000 : (o.finishedAt || o.updatedAt);
 
               return (
-                <div key={o.id} className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-50 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="flex justify-between items-start border-b border-slate-50 pb-4">
+                <div key={o.id} className="bg-white p-5 rounded-[24px] shadow-sm border border-black/[0.05] space-y-3.5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="flex justify-between items-start border-b border-black/[0.05] pb-3.5">
                     <div>
-                      <div className="flex flex-col mb-2">
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                      <div className="flex flex-col mb-1.5">
+                          <span className="text-[10px] font-medium text-ink-400 tracking-tight">
                             Pedido: {new Date(o.createdAt?.seconds ? o.createdAt.seconds * 1000 : o.createdAt).toLocaleDateString('pt-BR')}
                           </span>
                           {/* Só mostra a data de "Finalizado" se o status for concluído ou cancelado */}
                           {isFinalizado && finishTime && (
-                              <span className={`text-[9px] font-black uppercase tracking-widest mt-0.5 ${statusStr.includes('cancel') ? 'text-red-500' : 'text-emerald-500'}`}>
+                              <span className={`text-[10px] font-medium mt-0.5 ${statusStr.includes('cancel') ? 'text-red-500' : 'text-emerald-600'}`}>
                                 Finalizado: {new Date(finishTime).toLocaleDateString('pt-BR')}
                               </span>
                           )}
                       </div>
-                      <h3 className="font-black text-slate-800 italic uppercase text-sm leading-tight">
+                      <h3 className="font-display font-semibold text-ink-900 text-[15px] leading-tight">
                         {businesses.find(b => b.id === o.businessId)?.name || 'Loja não encontrada'}
                       </h3>
-                      <p className="text-[8px] font-black text-slate-400 uppercase mt-1 flex items-center gap-1">
-                        Por: {o.userName} 
-                        {o.userTag && <span className="text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md font-black">{o.userTag}</span>}
+                      <p className="text-[10px] font-medium text-ink-400 mt-1 flex items-center gap-1.5">
+                        Por: {o.userName}
+                        {o.userTag && <span className="text-brand-700 bg-brand-50 px-1.5 py-0.5 rounded-md font-semibold">{o.userTag}</span>}
                       </p>
                     </div>
                     <StatusBadge status={o.status} />
                   </div>
 
-                  <div className="bg-slate-50 p-5 rounded-2xl text-[11px] font-bold text-slate-600 space-y-2 border border-slate-100 shadow-inner">
+                  <div className="bg-black/[0.025] p-4 rounded-2xl text-[12px] font-medium text-ink-700 space-y-1.5">
                     {o.items.map((it: any, idx: number) => (
                       <p key={idx} className="flex justify-between items-center">
                         <span>{it.quantity}x {it.product.name}</span>
-                        <span className="text-slate-400 font-black">R$ {(it.product.price * it.quantity).toFixed(2)}</span>
+                        <span className="text-ink-500 font-semibold tabular-nums">R$ {(it.product.price * it.quantity).toFixed(2)}</span>
                       </p>
                     ))}
                   </div>
 
                   {o.observation && (
-                    <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-xl">
-                      <p className="text-[9px] font-black uppercase text-amber-600 mb-1">Observação:</p>
-                      <p className="text-amber-800 text-xs font-medium italic leading-relaxed">"{o.observation}"</p>
+                    <div className="bg-amber-50 border-l-4 border-amber-400 p-3.5 rounded-xl">
+                      <p className="text-[10px] font-semibold uppercase text-amber-600 mb-1">Observação</p>
+                      <p className="text-amber-800 text-[13px] font-medium leading-relaxed">"{o.observation}"</p>
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center pt-2">
+                  <div className="flex justify-between items-center pt-1">
                     <div className="flex flex-col">
                       <PaymentStatusBadge status={o.paymentStatus} />
-                      <span className="text-[8px] font-black uppercase text-slate-300 mt-1.5 tracking-widest">
+                      <span className="text-[10px] font-medium text-ink-400 mt-1.5">
                         {o.paymentMethod || 'Não informado'}
                       </span>
                     </div>
                     <div className="text-right">
-                      <p className="text-[9px] font-black text-slate-400 uppercase mb-0.5">Total</p>
-                      <p className="text-2xl font-black text-red-600 italic tracking-tighter leading-none">
+                      <p className="text-[10px] font-medium text-ink-400 mb-0.5">Total</p>
+                      <p className="font-display text-xl font-bold text-ink-900 tracking-tight leading-none tabular-nums">
                         R$ {o.total.toFixed(2)}
                       </p>
                     </div>
@@ -149,10 +149,9 @@ export default function MyOrdersView({ user, userOrders, businesses, setView }: 
               );
             })
         ) : (
-          <div className="py-20 text-center bg-white rounded-[32px] border border-dashed border-slate-200">
-            <span className="text-4xl block mb-4 grayscale opacity-20">🛒</span>
-            <p className="text-slate-400 font-black uppercase text-xs tracking-widest">Sem pedidos para exibir</p>
-            <p className="text-slate-300 text-[9px] font-bold uppercase mt-2">Pedidos finalizados em dias anteriores são arquivados.</p>
+          <div className="py-16 text-center bg-white rounded-[24px] border border-dashed border-black/10">
+            <p className="text-ink-500 font-semibold text-[13px]">Sem pedidos para exibir</p>
+            <p className="text-ink-400 text-[11px] font-medium mt-1.5">Pedidos finalizados em dias anteriores são arquivados.</p>
           </div>
         )}
       </div>

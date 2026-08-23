@@ -70,27 +70,27 @@ export default function CartView({
     const isOpen = isStoreCurrentlyOpen(selectedBusiness);
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-20 md:p-6 animate-in slide-in-from-bottom-4 duration-500">
-            <div className="max-w-5xl mx-auto bg-white min-h-screen md:min-h-auto md:rounded-[40px] shadow-2xl overflow-hidden relative flex flex-col border border-slate-100">
-                
-                <header className="p-6 md:p-8 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-40">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => setView('business')} className="w-10 h-10 bg-slate-50 hover:bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 border border-slate-200 transition-colors">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg>
+        <div className="min-h-screen bg-cream-100 pb-20 md:p-6 animate-in slide-in-from-bottom-4 duration-500 font-sans">
+            <div className="max-w-5xl mx-auto bg-cream-50 min-h-screen md:min-h-auto md:rounded-[32px] shadow-2xl shadow-ink-900/10 overflow-hidden relative flex flex-col border border-black/[0.05]">
+
+                <header className="p-5 md:p-8 border-b border-black/[0.06] flex items-center justify-between bg-cream-50/90 backdrop-blur-md sticky top-0 z-40">
+                    <div className="flex items-center gap-3.5">
+                        <button onClick={() => setView('business')} className="w-10 h-10 bg-black/[0.04] hover:bg-black/[0.07] rounded-2xl flex items-center justify-center text-ink-700 active:scale-90 transition-all">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>
                         </button>
                         <div>
-                            <h1 className="text-xl md:text-2xl font-black italic uppercase text-slate-800">Seu Carrinho</h1>
-                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{selectedBusiness.name}</p>
+                            <h1 className="font-display text-lg md:text-xl font-semibold text-ink-900 tracking-tight">Seu Carrinho</h1>
+                            <p className="text-[10px] font-semibold uppercase text-ink-500 tracking-widest">{selectedBusiness.name}</p>
                         </div>
                     </div>
                 </header>
 
                 <div className="flex-1 p-4 md:p-8">
-                    <div className="flex flex-col lg:flex-row gap-8 items-start">
-                        
-                        <div className="flex-1 w-full space-y-4">
-                            <div className="flex items-center justify-between mb-2 px-2">
-                                <h3 className="font-black text-slate-800 text-sm uppercase tracking-widest">Itens Selecionados</h3>
+                    <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+
+                        <div className="flex-1 w-full space-y-3">
+                            <div className="flex items-center justify-between mb-1 px-1">
+                                <h3 className="font-semibold text-ink-700 text-[13px] uppercase tracking-widest">Itens Selecionados</h3>
                                 <button onClick={() => {
                                     Swal.fire({
                                         title: 'Limpar carrinho?',
@@ -101,68 +101,68 @@ export default function CartView({
                                         cancelButtonText: 'Cancelar',
                                         confirmButtonColor: '#ef4444'
                                     }).then((result) => { if (result.isConfirmed) setCart([]); });
-                                }} className="text-[10px] font-black text-red-500 uppercase tracking-widest hover:bg-red-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-1">
+                                }} className="text-[11px] font-semibold text-red-500 uppercase tracking-wider hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1">
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                    Limpar Carrinho
+                                    Limpar
                                 </button>
                             </div>
 
-                            <div className="bg-slate-50 rounded-[32px] p-3 border border-slate-100 shadow-inner">
+                            <div className="bg-black/[0.025] rounded-[24px] p-2.5">
                                 {cart.map((i, idx) => (
-                                    <div key={i.product.id} className={`p-4 flex items-center gap-4 md:gap-6 ${idx !== cart.length - 1 ? 'border-b border-slate-200/60' : ''}`}>
-                                        <div className="relative">
-                                            <img src={i.product.image} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-2xl shadow-sm border border-slate-200" />
+                                    <div key={i.product.id} className={`p-3.5 flex items-center gap-3.5 md:gap-5 ${idx !== cart.length - 1 ? 'border-b border-black/[0.05]' : ''}`}>
+                                        <div className="relative shrink-0">
+                                            <img src={i.product.image} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-2xl border border-black/[0.05]" />
                                             {i.product.isQuoteOnly && (
-                                                <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow-lg">
-                                                    PERSONALIZADO
+                                                <div className="absolute -top-2 -right-2 bg-brand-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-md shadow-sm">
+                                                    CUSTOM
                                                 </div>
                                             )}
                                         </div>
 
-                                        <div className="flex-1">
-                                            <h4 className="font-black text-slate-800 text-sm md:text-base italic leading-tight mb-1">
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-display font-semibold text-ink-900 text-sm md:text-[15px] leading-tight mb-1 truncate">
                                                 {i.product.name}
                                             </h4>
-                                            
+
                                             {i.product.isQuoteOnly ? (
-                                                <div className="space-y-1">
-                                                    <p className="text-blue-600 font-black text-[10px] uppercase tracking-tighter flex items-center gap-1">
-                                                        <span>📝</span> Sob Consulta
+                                                <div className="space-y-0.5">
+                                                    <p className="text-brand-600 font-semibold text-[11px] uppercase tracking-tight">
+                                                        Sob Consulta
                                                     </p>
-                                                    <p className="text-[9px] text-slate-400 font-bold uppercase leading-tight">
+                                                    <p className="text-[10px] text-ink-400 font-medium leading-tight">
                                                         Lojista definirá o preço
                                                     </p>
                                                 </div>
                                             ) : (
-                                                <p className="text-red-600 font-black text-sm">
+                                                <p className="text-ink-900 font-semibold text-sm">
                                                     R$ {i.product.price.toFixed(2)}
                                                 </p>
                                             )}
                                         </div>
-                                        
-                                        <div className="flex items-center gap-2 bg-white p-1 md:p-1.5 rounded-xl border border-slate-200 shadow-sm">
-                                            <button 
-                                                onClick={() => i.quantity > 1 ? updateQuantity(i.product.id, i.quantity - 1) : removeFromCart(i.product.id)} 
-                                                className="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-lg text-slate-600 hover:bg-slate-200 transition-colors"
+
+                                        <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-black/[0.06] shadow-sm shrink-0">
+                                            <button
+                                                onClick={() => i.quantity > 1 ? updateQuantity(i.product.id, i.quantity - 1) : removeFromCart(i.product.id)}
+                                                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center bg-black/[0.04] rounded-lg text-ink-700 hover:bg-black/[0.08] active:scale-90 transition-all"
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M20 12H4"/>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20 12H4"/>
                                                 </svg>
                                             </button>
-                                            
-                                            <span className="w-6 text-center font-black text-slate-800 text-sm">
+
+                                            <span className="w-5 text-center font-semibold text-ink-900 text-sm tabular-nums">
                                                 {i.quantity}
                                             </span>
-                                            
-                                            <button 
-                                                onClick={() => updateQuantity(i.product.id, i.quantity + 1)} 
+
+                                            <button
+                                                onClick={() => updateQuantity(i.product.id, i.quantity + 1)}
                                                 disabled={!i.product.isQuoteOnly && i.product.controlaEstoque && i.quantity >= i.product.estoqueAtual}
-                                                className={`w-8 h-8 flex items-center justify-center rounded-lg text-white transition-all 
-                                                    ${i.product.isQuoteOnly ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-900 hover:bg-black'}
+                                                className={`w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-lg text-white transition-all active:scale-90
+                                                    ${i.product.isQuoteOnly ? 'bg-brand-600 hover:bg-brand-700' : 'bg-ink-900 hover:bg-ink-700'}
                                                     ${(!i.product.isQuoteOnly && i.product.controlaEstoque && i.quantity >= i.product.estoqueAtual) ? 'opacity-30 cursor-not-allowed' : ''}`}
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/>
                                                 </svg>
                                             </button>
                                         </div>
@@ -171,49 +171,42 @@ export default function CartView({
                             </div>
                         </div>
 
-                        <div className="w-full lg:w-96 lg:sticky lg:top-32 space-y-6">
+                        <div className="w-full lg:w-96 lg:sticky lg:top-28 space-y-4">
                             {selectedBusiness.loyalty?.ativo && cart.length > 0 && (
-                                <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-[32px] p-6 text-white shadow-xl relative overflow-hidden">
-                                    <div className="absolute -right-4 -top-4 text-7xl opacity-20">🎁</div>
+                                <div className="bg-emerald-600 rounded-[24px] p-6 text-white shadow-lg shadow-emerald-600/20 relative overflow-hidden">
                                     <div className="relative z-10">
-                                        <div className="flex justify-between items-center mb-6">
-                                            <div>
-                                                <p className="text-[10px] font-black uppercase tracking-widest opacity-90 mb-1">Programa Fidelidade</p>
-                                                <h4 className="text-2xl font-black italic tracking-tighter">Saldo: {bizPointsBalance} pts</h4>
-                                            </div>
-                                        </div>
-                                        <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-4 border border-white/10 flex justify-between items-center mb-6">
-                                            <div>
-                                                <p className="text-[9px] font-bold uppercase opacity-80 mb-0.5">Ganhos previstos</p>
-                                                <p className={`text-lg font-black italic ${pointsToEarn > 0 ? 'text-emerald-200' : 'text-slate-300'}`}>+{pointsToEarn} pts</p>
-                                            </div>
+                                        <p className="text-[10px] font-semibold uppercase tracking-widest opacity-80 mb-1">Programa Fidelidade</p>
+                                        <h4 className="font-display text-2xl font-bold tracking-tight mb-5">Saldo: {bizPointsBalance} pts</h4>
+                                        <div className="bg-black/15 rounded-2xl p-3.5 flex justify-between items-center mb-5">
+                                            <p className="text-[10px] font-semibold uppercase opacity-80">Ganhos previstos</p>
+                                            <p className={`text-[15px] font-display font-bold ${pointsToEarn > 0 ? 'text-emerald-100' : 'text-white/60'}`}>+{pointsToEarn} pts</p>
                                         </div>
                                         {canRedeem ? (
-                                            <button onClick={() => setAppliedLoyalty(!appliedLoyalty)} className={`w-full py-4 rounded-xl border-2 transition-all font-black text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 ${appliedLoyalty ? 'bg-white text-emerald-800 border-white shadow-lg' : 'bg-transparent text-white border-white/40 hover:bg-white/10'}`}>
+                                            <button onClick={() => setAppliedLoyalty(!appliedLoyalty)} className={`w-full py-3.5 rounded-xl transition-all font-semibold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 active:scale-[0.98] ${appliedLoyalty ? 'bg-white text-emerald-700 shadow-sm' : 'bg-white/15 text-white hover:bg-white/25'}`}>
                                                 {appliedLoyalty ? 'Desconto Aplicado ✓' : 'Resgatar Benefício'}
                                             </button>
                                         ) : (
-                                            <div className="w-full py-3 rounded-xl bg-black/20 text-center border border-white/10">
-                                                <p className="text-[9px] font-bold uppercase opacity-80 tracking-widest">Faltam {selectedBusiness.loyalty.metaPontos - bizPointsBalance} pts</p>
+                                            <div className="w-full py-3 rounded-xl bg-black/15 text-center">
+                                                <p className="text-[10px] font-medium opacity-80 tracking-wide">Faltam {selectedBusiness.loyalty.metaPontos - bizPointsBalance} pts</p>
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             )}
 
-                            <div className="bg-white rounded-[32px] p-6 md:p-8 border border-slate-100 shadow-lg space-y-4">
-                                <h3 className="font-black text-slate-800 text-sm uppercase tracking-widest mb-4">Resumo do Pedido</h3>
-                                <div className="space-y-3 pb-6 border-b border-slate-100">
-                                    <div className="flex justify-between text-slate-500 font-bold uppercase text-[11px]"><span>Subtotal</span><span>R$ {subtotal.toFixed(2)}</span></div>
+                            <div className="bg-white rounded-[24px] p-6 border border-black/[0.05] shadow-sm space-y-3">
+                                <h3 className="font-semibold text-ink-700 text-[13px] uppercase tracking-widest mb-3">Resumo do Pedido</h3>
+                                <div className="space-y-2.5 pb-5 border-b border-black/[0.06]">
+                                    <div className="flex justify-between text-ink-500 font-medium text-[13px]"><span>Subtotal</span><span className="tabular-nums">R$ {subtotal.toFixed(2)}</span></div>
                                     {appliedLoyalty && displayDiscount > 0 && (
-                                        <div className="flex justify-between text-emerald-600 font-black uppercase text-[11px]"><span>Desconto Fidelidade</span><span>- R$ {displayDiscount.toFixed(2)}</span></div>
+                                        <div className="flex justify-between text-emerald-600 font-semibold text-[13px]"><span>Desconto Fidelidade</span><span className="tabular-nums">- R$ {displayDiscount.toFixed(2)}</span></div>
                                     )}
                                 </div>
-                                <div className="flex justify-between items-end pt-2">
-                                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total a Pagar</p>
-                                    <p className="text-3xl font-black text-red-600 italic tracking-tighter leading-none">R$ {totalFinal.toFixed(2)}</p>
+                                <div className="flex justify-between items-end pt-1">
+                                    <p className="text-[11px] font-semibold text-ink-500 uppercase tracking-widest leading-none mb-1">Total a Pagar</p>
+                                    <p className="font-display text-3xl font-bold text-ink-900 tracking-tight leading-none tabular-nums">R$ {totalFinal.toFixed(2)}</p>
                                 </div>
-                                <button onClick={finalizeOrder} disabled={cart.length === 0 || !isOpen} className="w-full mt-4 bg-red-600 text-white font-black py-4 md:py-5 rounded-2xl shadow-xl shadow-red-500/30 uppercase tracking-widest text-xs hover:bg-red-700 active:scale-95 transition-all disabled:opacity-50">
+                                <button onClick={finalizeOrder} disabled={cart.length === 0 || !isOpen} className="w-full mt-3 bg-brand-600 text-white font-display font-semibold py-4 rounded-2xl shadow-lg shadow-brand-600/25 uppercase tracking-widest text-xs hover:bg-brand-700 active:scale-[0.98] transition-all disabled:opacity-50">
                                     {isOpen ? (totalFinal === 0 ? 'Resgatar Agora' : 'Finalizar Pedido') : 'Loja Fechada'}
                                 </button>
                             </div>

@@ -63,61 +63,61 @@ interface ProductDetailModalProps {
 
 export function ProductDetailModal({ product, onClose, onAdd, isOpen }: ProductDetailModalProps) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200 font-sans">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md transition-opacity" onClick={onClose} />
+      <div className="absolute inset-0 bg-ink-900/60 backdrop-blur-md transition-opacity" onClick={onClose} />
 
-      <div className="bg-white w-full max-w-4xl rounded-[32px] overflow-hidden relative shadow-2xl animate-in zoom-in-95 duration-300 border border-white/20 flex flex-col md:flex-row max-h-[90vh]">
+      <div className="bg-cream-50 w-full max-w-4xl rounded-[28px] overflow-hidden relative shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col md:flex-row max-h-[90vh]">
 
         {/* Botão fechar */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-10 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all md:text-slate-900 md:bg-white/50 md:hover:bg-white"
+          className="absolute top-4 right-4 z-20 w-9 h-9 bg-black/20 hover:bg-black/35 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all active:scale-90 md:text-ink-900 md:bg-white/60 md:hover:bg-white"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+          <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
         {/* Imagem */}
-        <div className="h-64 md:h-auto md:w-1/2 relative bg-slate-100">
+        <div className="h-56 md:h-auto md:w-1/2 relative bg-cream-200">
           <img src={product.image} className="w-full h-full object-cover" alt={product.name} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 md:hidden" />
         </div>
 
         {/* Conteúdo */}
-        <div className="p-6 md:p-10 md:w-1/2 bg-white flex flex-col overflow-y-auto">
+        <div className="p-6 md:p-9 md:w-1/2 bg-cream-50 flex flex-col overflow-y-auto">
           <div className="flex justify-between items-start mb-4 gap-4">
             <div className="flex-1">
-              <span className="bg-blue-50 text-blue-600 text-[10px] font-black uppercase px-3 py-1 rounded-full mb-3 inline-block tracking-widest">
+              <span className="bg-brand-50 text-brand-600 text-[10px] font-semibold uppercase px-2.5 py-1 rounded-full mb-2.5 inline-block tracking-wider">
                 {product.isQuoteOnly ? 'Personalizado / Serviço' : product.category}
               </span>
-              <h2 className="text-2xl md:text-3xl font-black italic text-slate-800 tracking-tighter leading-snug">
+              <h2 className="font-display text-xl md:text-2xl font-semibold text-ink-900 tracking-tight leading-snug">
                 {product.name}
               </h2>
             </div>
-            <div className="text-right">
+            <div className="text-right shrink-0">
               {product.isQuoteOnly ? (
-                <p className="text-lg md:text-xl font-black text-blue-600 italic tracking-tighter whitespace-nowrap">
+                <p className="text-base md:text-lg font-semibold text-brand-600 whitespace-nowrap">
                   Sob Consulta
                 </p>
               ) : (
-                <p className="text-2xl md:text-3xl font-black text-red-600 italic tracking-tighter whitespace-nowrap">
+                <p className="font-display text-2xl md:text-3xl font-bold text-ink-900 tracking-tight whitespace-nowrap tabular-nums">
                   R$ {product.price.toFixed(2)}
                 </p>
               )}
             </div>
           </div>
 
-          <p className="text-slate-600 font-medium text-sm leading-8 mb-8 text-justify flex-1">
+          <p className="text-ink-600 font-medium text-sm leading-7 mb-6 flex-1">
             {product.description}
           </p>
 
           <div className="flex flex-col gap-3 mt-auto">
             {product.isQuoteOnly && (
-              <div className="bg-blue-50 p-4 rounded-2xl mb-2 border border-blue-100">
-                <p className="text-[10px] font-black uppercase text-blue-600 leading-tight">
-                  💡 Este item requer análise do lojista para o orçamento final.
+              <div className="bg-brand-50 p-4 rounded-2xl mb-1">
+                <p className="text-[11px] font-medium text-brand-700 leading-tight">
+                  Este item requer análise do lojista para o orçamento final.
                 </p>
               </div>
             )}
@@ -126,11 +126,11 @@ export function ProductDetailModal({ product, onClose, onAdd, isOpen }: ProductD
               onClick={() => onAdd(product)}
               disabled={!isOpen || (!product.isQuoteOnly && product.controlaEstoque && product.estoqueAtual <= 0)}
               className={`
-                w-full py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl
-                active:scale-95 transition-all disabled:opacity-50 text-sm
+                w-full py-4 rounded-2xl font-display font-semibold uppercase tracking-widest shadow-lg
+                active:scale-[0.98] transition-all disabled:opacity-50 text-[13px]
                 ${product.isQuoteOnly
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-slate-900 text-white hover:bg-slate-800'}
+                  ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-brand-600/20'
+                  : 'bg-ink-900 text-white hover:bg-ink-700 shadow-ink-900/15'}
               `}
             >
               {!isOpen
@@ -261,20 +261,20 @@ const displayedCategories = useMemo(() => {
   const isOpen = isStoreCurrentlyOpen(selectedBusiness);
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-7 pb-10 font-sans">
 
       {/* Navegação de categorias internas */}
-      <div className="sticky top-0 z-40 -mx-6 px-6 md:mx-0 md:px-0 transition-all">
-        <div className="py-4 md:p-4 bg-slate-50/95 backdrop-blur-md md:bg-white md:rounded-[24px] md:shadow-sm md:border md:border-slate-100 flex gap-3 overflow-x-auto scrollbar-hide md:flex-wrap md:justify-start items-center">
+      <div className="sticky top-0 z-40 transition-all">
+        <div className="py-3 md:p-3 bg-cream-100/95 backdrop-blur-md md:bg-white md:rounded-[20px] md:shadow-sm flex gap-2 overflow-x-auto scrollbar-hide md:flex-wrap md:justify-start items-center">
           {internalCategories.map(cat => (
             <button
               key={cat}
               onClick={() => setActiveInternalCategory(cat)}
               className={`
-                flex-none px-6 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 border
+                flex-none px-4 py-2 rounded-xl font-semibold text-[12px] transition-all duration-150 active:scale-[0.97]
                 ${activeInternalCategory === cat
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-lg'
-                  : 'bg-white text-slate-500 border-slate-200 hover:border-blue-200 hover:bg-blue-50'}
+                  ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/20'
+                  : 'bg-black/[0.03] text-ink-500 hover:bg-black/[0.06]'}
               `}
             >
               {cat}
@@ -284,20 +284,20 @@ const displayedCategories = useMemo(() => {
       </div>
 
       {/* Grid de produtos por categoria */}
-      <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="space-y-9 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {displayedCategories.map(catName => (
-          <div key={catName} className="space-y-6">
+          <div key={catName} className="space-y-4">
 
             {/* Cabeçalho da categoria */}
-            <div className="flex items-center gap-4">
-              <h3 className="font-black text-slate-800 text-sm uppercase tracking-[0.2em] italic bg-slate-200/50 px-4 py-1 rounded-lg">
+            <div className="flex items-center gap-3">
+              <h3 className="font-semibold text-ink-700 text-[13px] tracking-tight">
                 {catName}
               </h3>
-              <div className="h-px flex-1 bg-slate-200" />
+              <div className="h-px flex-1 bg-black/[0.06]" />
             </div>
 
             {/* Cards de produto */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 items-stretch">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3.5 md:gap-6 items-stretch">
               {groupedProducts[catName]?.map(p => {
                 const isOutOfStock = !p.isQuoteOnly && p.controlaEstoque && p.estoqueAtual <= 0;
 
@@ -306,31 +306,31 @@ const displayedCategories = useMemo(() => {
                     key={p.id}
                     onClick={() => { if (!isOpen || isOutOfStock) return; onAdd(p); }}
                     className={`
-                      bg-white rounded-[24px] md:rounded-[32px] p-4 md:p-5 flex flex-col
-                      border border-slate-100 shadow-sm transition-all group relative overflow-hidden
-                      h-full min-h-[280px] md:min-h-[340px]
+                      bg-white rounded-[20px] md:rounded-[24px] p-3.5 md:p-4 flex flex-col
+                      shadow-sm transition-all group relative overflow-hidden
+                      h-full min-h-[260px] md:min-h-[320px]
                       ${(!isOpen || isOutOfStock)
-                        ? 'opacity-60 grayscale cursor-not-allowed'
-                        : 'hover:shadow-xl hover:-translate-y-1 cursor-pointer hover:border-red-100'}
+                        ? 'opacity-50 grayscale cursor-not-allowed'
+                        : 'hover:shadow-lg hover:shadow-ink-900/8 active:scale-[0.98] cursor-pointer'}
                     `}
                   >
                     {/* Imagem */}
-                    <div className="relative aspect-square md:aspect-video mb-4 overflow-hidden rounded-[18px] md:rounded-[24px] bg-slate-100 flex-shrink-0">
+                    <div className="relative aspect-square md:aspect-video mb-3.5 overflow-hidden rounded-2xl bg-cream-200 flex-shrink-0">
                       <img
                         src={p.image}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         alt={p.name}
                       />
 
                       {p.isQuoteOnly && (
-                        <div className="absolute top-2 left-2 bg-blue-600 text-white text-[7px] md:text-[9px] font-black uppercase px-2 py-1 rounded-full shadow-lg">
+                        <div className="absolute top-2 left-2 bg-brand-600 text-white text-[8px] font-semibold uppercase px-2 py-1 rounded-full shadow-sm">
                           Personalizado
                         </div>
                       )}
 
                       {isOutOfStock && (
-                        <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center">
-                          <span className="bg-white text-slate-900 text-[8px] md:text-[10px] font-black uppercase px-3 py-1.5 rounded-full shadow-xl">
+                        <div className="absolute inset-0 bg-ink-900/60 flex items-center justify-center">
+                          <span className="bg-white text-ink-900 text-[9px] font-semibold uppercase px-3 py-1.5 rounded-full">
                             Esgotado
                           </span>
                         </div>
@@ -339,34 +339,34 @@ const displayedCategories = useMemo(() => {
 
                     {/* Informações */}
                     <div className="flex-1 flex flex-col min-w-0">
-                      <div className="flex flex-col gap-1 mb-4">
-                        <h4 className="font-black text-slate-800 text-sm md:text-base italic tracking-tight leading-tight line-clamp-2 min-h-[2.5em]">
+                      <div className="flex flex-col gap-1 mb-3.5">
+                        <h4 className="font-display font-semibold text-ink-900 text-[13px] md:text-[15px] tracking-tight leading-tight line-clamp-2 min-h-[2.5em]">
                           {p.name}
                         </h4>
-                        <div className="mt-1">
+                        <div className="mt-0.5">
                           {p.isQuoteOnly ? (
-                            <span className="font-black text-blue-600 text-[10px] md:text-xs uppercase tracking-widest bg-blue-50 px-2 py-1 rounded-lg">
-                              Sob Consulta 📝
+                            <span className="font-semibold text-brand-600 text-[11px] bg-brand-50 px-2 py-1 rounded-lg">
+                              Sob Consulta
                             </span>
                           ) : (
-                            <span className="font-black text-red-600 text-base md:text-xl tracking-tighter italic">
+                            <span className="font-display font-bold text-ink-900 text-base md:text-lg tracking-tight tabular-nums">
                               R$ {p.price.toFixed(2)}
                             </span>
                           )}
                         </div>
                       </div>
 
-                      {/* Rodapé do card - BADGE DE ESTOQUE ATUALIZADO AQUI */}
-                      <div className="mt-auto flex items-center justify-between border-t border-slate-50 pt-3 md:pt-4">
+                      {/* Rodapé do card */}
+                      <div className="mt-auto flex items-center justify-between border-t border-black/[0.05] pt-2.5 md:pt-3">
                         <button
                           onClick={(e) => { e.stopPropagation(); onShowDetails(p); }}
-                          className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-red-600 transition-colors bg-slate-50 px-3 py-2 rounded-lg"
+                          className="text-[10px] font-semibold text-ink-500 hover:text-brand-600 transition-colors bg-black/[0.03] px-2.5 py-1.5 rounded-lg"
                         >
                           Ver Detalhes
                         </button>
 
                         {!p.isQuoteOnly && p.controlaEstoque && p.estoqueAtual > 0 && (
-                          <span className={`text-[8px] md:text-[9px] font-black uppercase px-2 py-1 rounded-md ${p.estoqueAtual <= 5 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                          <span className={`text-[9px] font-semibold px-2 py-1 rounded-md ${p.estoqueAtual <= 5 ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
                             Qtd: {p.estoqueAtual}
                           </span>
                         )}
@@ -381,12 +381,11 @@ const displayedCategories = useMemo(() => {
 
         {/* Estado vazio (Vitrine) */}
         {displayedCategories.length === 0 && (
-          <div className="py-20 text-center space-y-4 bg-white rounded-[32px] border border-dashed border-slate-200 animate-in fade-in duration-500">
+          <div className="py-16 text-center space-y-3 bg-white rounded-[24px] border border-dashed border-black/10 animate-in fade-in duration-300">
             {selectedBusiness.tipoPlano === 'vitrine' ? (
               <>
-                <span className="text-5xl block mb-2">✨</span>
-                <h4 className="font-black text-slate-800 uppercase text-xs tracking-widest">Catálogo sob consulta</h4>
-                <p className="text-slate-400 text-[10px] font-medium max-w-[220px] mx-auto leading-relaxed">
+                <h4 className="font-display font-semibold text-ink-900 text-sm">Catálogo sob consulta</h4>
+                <p className="text-ink-500 text-[12px] font-medium max-w-[220px] mx-auto leading-relaxed">
                   Este parceiro utiliza o modo vitrine. Entre em contacto para conhecer todos os serviços e produtos disponíveis!
                 </p>
 
@@ -397,7 +396,7 @@ const displayedCategories = useMemo(() => {
                           const whatsapp = selectedBusiness.social?.whatsapp?.replace(/\D/g, '');
                           if (whatsapp) window.open(`https://wa.me/${whatsapp}`, '_blank');
                         }}
-                        className="w-full max-w-[200px] bg-emerald-500 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all active:scale-95 shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                        className="w-full max-w-[200px] bg-emerald-500 text-white px-6 py-3 rounded-2xl text-[11px] font-semibold uppercase tracking-wider hover:bg-emerald-600 transition-all active:scale-[0.97] shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
                       >
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.017-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" />
@@ -408,9 +407,9 @@ const displayedCategories = useMemo(() => {
 
                   <button
                     onClick={() => onShowAbout(true)}
-                    className="w-full max-w-[200px] bg-slate-100 text-slate-500 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                    className="w-full max-w-[200px] bg-black/[0.04] text-ink-600 px-6 py-3 rounded-2xl text-[11px] font-semibold uppercase tracking-wider hover:bg-black/[0.07] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
                     </svg>
                     Sobre a Loja
@@ -418,12 +417,9 @@ const displayedCategories = useMemo(() => {
                 </div>
               </>
             ) : (
-              <>
-                <span className="text-5xl opacity-20 block grayscale">🛒</span>
-                <p className="font-black text-slate-300 uppercase text-[10px] tracking-widest">
-                  Nenhum produto nesta categoria
-                </p>
-              </>
+              <p className="font-medium text-ink-400 text-[12px]">
+                Nenhum produto nesta categoria
+              </p>
             )}
           </div>
         )}
