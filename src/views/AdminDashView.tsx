@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Business, Product, Order, OrderStatus, BusinessHours, PaymentMethod } from '../types';
 import { Condominio } from '../types';
 import { ViewType, AdminTab, TimeFilter } from '../hooks/useAppState';
@@ -8,6 +9,10 @@ import { supabase } from "../../db";
 import Swal from 'sweetalert2';
 import DashboardAdminView from './DashboardAdminView';
 import InstallBanner from '../components/InstallBanner';
+import {
+  LayoutDashboard, ClipboardList, Store, Star, Users, BarChart3, Settings,
+  RefreshCw, Menu as MenuIcon, X as XIcon, LogOut,
+} from 'lucide-react';
 
 // ─────────────────────────────────────────────
 //  Tipos
@@ -223,13 +228,13 @@ export default function AdminDashView(props: AdminDashViewProps) {
   const isService     = adminBusiness.category === 'service';
 
   const TABS = [
-    { id: 'dashboard',  label: 'Painel Geral' },
-    { id: 'pedidos',    label: 'Pedidos'    },
-    { id: 'cardapio',   label: 'Catálogo'   },
-    { id: 'avaliacoes', label: 'Avaliações' },
-    { id: 'clientes',   label: 'Clientes'   },
-    { id: 'relatorio',  label: 'Financeiro' },
-    { id: 'config',     label: 'Config'     },
+    { id: 'dashboard',  label: 'Painel Geral', icon: LayoutDashboard },
+    { id: 'pedidos',    label: 'Pedidos',      icon: ClipboardList   },
+    { id: 'cardapio',   label: 'Catálogo',     icon: Store           },
+    { id: 'avaliacoes', label: 'Avaliações',   icon: Star            },
+    { id: 'clientes',   label: 'Clientes',     icon: Users           },
+    { id: 'relatorio',  label: 'Financeiro',   icon: BarChart3       },
+    { id: 'config',     label: 'Config',       icon: Settings        },
   ] as const;
 
   const DAY_LABELS: Record<string, string> = {
@@ -238,95 +243,109 @@ export default function AdminDashView(props: AdminDashViewProps) {
   };
 
  return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+    <div className="flex h-screen bg-cream-100 overflow-hidden font-sans">
       {isAdminRefreshing && <LoadingOverlay type="admin" />}
 
       {/* ── Overlay Mobile ──────────────────────── */}
       {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 md:hidden"
+        <div
+          className="fixed inset-0 bg-ink-900/50 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       {/* ── Sidebar Lateral ──────────────────────── */}
-      <aside 
-        className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-slate-900 text-white transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 flex flex-col shadow-2xl md:shadow-none`}
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-ink-900 text-white transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 flex flex-col shadow-2xl md:shadow-none`}
       >
          {/* Logo / Header da Sidebar */}
-         <div className="p-6 md:p-8 border-b border-white/10 flex items-center justify-between">
-           <div className="flex items-center gap-4">
-             <img src={adminBusiness.image} className="w-12 h-12 rounded-2xl object-cover border-2 border-white/10 shadow-lg" alt="Logo" />
+         <div className="p-6 md:p-7 border-b border-white/10 flex items-center justify-between">
+           <div className="flex items-center gap-3.5 min-w-0">
+             <img src={adminBusiness.image} className="w-11 h-11 rounded-2xl object-cover border-2 border-white/10 shrink-0" alt="Logo" />
              <div className="overflow-hidden">
-               <h1 className="text-sm font-black italic truncate">{adminBusiness.name}</h1>
-               <p className="text-[9px] text-emerald-400 font-black uppercase tracking-widest mt-0.5">Painel Parceiro</p>
+               <h1 className="font-display text-[15px] font-semibold truncate">{adminBusiness.name}</h1>
+               <p className="text-[9px] text-brand-300 font-semibold uppercase tracking-widest mt-0.5">Painel Parceiro</p>
              </div>
            </div>
-           <button className="md:hidden text-slate-400 hover:text-white transition-colors p-2" onClick={() => setIsMobileMenuOpen(false)}>
-             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+           <button className="md:hidden text-white/50 hover:text-white transition-colors p-2 active:scale-90" onClick={() => setIsMobileMenuOpen(false)}>
+             <XIcon className="w-5 h-5" />
            </button>
          </div>
 
          {/* Menu de Navegação */}
-         <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-2 custom-scrollbar">
-           <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mb-4 ml-2">Menu Principal</p>
-           {TABS.map(t => (
-             <button
-                key={t.id}
-                onClick={() => { setActiveAdminTab(t.id as AdminTab); setIsMobileMenuOpen(false); }}
-                className={`w-full flex items-center justify-between px-5 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${activeAdminTab === t.id ? 'bg-white text-slate-900 shadow-xl scale-105' : 'text-slate-400 hover:text-white hover:bg-white/5 hover:translate-x-1'}`}
-             >
-                {t.label}
-                {t.id === 'pedidos' && pendingCount > 0 && (
-                   <span className="flex h-5 w-5 relative">
-                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                     <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 items-center justify-center text-[9px] font-black text-white">{pendingCount}</span>
-                   </span>
-                )}
-             </button>
-           ))}
+         <nav className="flex-1 overflow-y-auto py-5 px-3.5 space-y-1 custom-scrollbar">
+           <p className="text-[10px] font-semibold uppercase text-white/30 tracking-[0.15em] mb-3 ml-2.5">Menu Principal</p>
+           {TABS.map(t => {
+             const isActive = activeAdminTab === t.id;
+             const Icon = t.icon;
+             return (
+               <button
+                  key={t.id}
+                  onClick={() => { setActiveAdminTab(t.id as AdminTab); setIsMobileMenuOpen(false); }}
+                  className="relative w-full flex items-center justify-between px-4 py-3 rounded-xl text-[13px] font-semibold transition-colors duration-150"
+               >
+                  {isActive && (
+                    <motion.div
+                      layoutId="admin-tab-active"
+                      className="absolute inset-0 bg-white rounded-xl shadow-sm"
+                      transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                    />
+                  )}
+                  <span className={`relative z-10 flex items-center gap-3 ${isActive ? 'text-ink-900' : 'text-white/55 hover:text-white'}`}>
+                    <Icon className={`w-[18px] h-[18px] ${isActive ? 'text-brand-600' : ''}`} strokeWidth={2.25} />
+                    {t.label}
+                  </span>
+                  {t.id === 'pedidos' && pendingCount > 0 && (
+                     <span className="relative z-10 flex h-5 min-w-5 px-1 relative">
+                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-400 opacity-60" />
+                       <span className="relative inline-flex w-full rounded-full bg-accent-500 items-center justify-center text-[9px] font-bold text-white px-1.5">{pendingCount}</span>
+                     </span>
+                  )}
+               </button>
+             );
+           })}
          </nav>
 
          {/* Footer da Sidebar */}
-         <div className="p-6 border-t border-white/10">
-           <button 
+         <div className="p-5 border-t border-white/10">
+           <button
              onClick={() => {
                // Pega o slug do condomínio atual (ex: 'maxi') para manter na URL
                const slug = adminCondo?.slug || new URLSearchParams(window.location.search).get('c') || 'maxi';
                // Força o redirecionamento limpando a memória
                window.location.href = `/?c=${slug}&portal=business`;
-             }} 
-             className="w-full flex items-center justify-center gap-3 px-4 py-4 rounded-2xl bg-white/5 text-slate-300 hover:text-white hover:bg-red-500 hover:shadow-lg hover:shadow-red-500/20 font-black text-[10px] uppercase transition-all duration-300 active:scale-95"
+             }}
+             className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-xl bg-white/5 text-white/60 hover:text-white hover:bg-red-500/90 font-semibold text-[12px] uppercase tracking-wide transition-all duration-150 active:scale-[0.98]"
            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+              <LogOut className="w-4 h-4" strokeWidth={2.25} />
               Sair do Painel
            </button>
          </div>
       </aside>
 
       {/* ── Conteúdo Principal ──────────────────── */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50 relative">
-	  
+      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-cream-100 relative">
+
          {/* Topbar (Header do Painel) */}
-         <header className="bg-white/80 backdrop-blur-md px-6 py-5 flex items-center justify-between shadow-sm z-20 border-b border-slate-100">
-            <div className="flex items-center gap-4">
+         <header className="bg-cream-50/90 backdrop-blur-md px-5 md:px-6 py-4 flex items-center justify-between z-20 border-b border-black/[0.06]">
+            <div className="flex items-center gap-3.5">
                {/* Hamburger Button (Mobile) */}
-               <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden text-slate-900 hover:bg-slate-100 p-2 rounded-xl transition-colors">
-                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
+               <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden text-ink-900 hover:bg-black/[0.04] p-2 rounded-xl transition-colors active:scale-90">
+                 <MenuIcon className="w-5 h-5" strokeWidth={2.25} />
                </button>
-               
-               {/* Título da Aba Atual */}
-               <div className="hidden md:flex w-10 h-10 bg-slate-100 rounded-xl items-center justify-center text-slate-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+
+               {/* Ícone da Aba Atual */}
+               <div className="hidden md:flex w-10 h-10 bg-black/[0.04] rounded-xl items-center justify-center text-brand-600">
+                  {(() => { const Icon = TABS.find(t => t.id === activeAdminTab)?.icon || LayoutDashboard; return <Icon className="w-5 h-5" strokeWidth={2.25} />; })()}
                </div>
                <div>
-                 <h1 className="text-lg md:text-2xl font-black italic uppercase tracking-tighter text-slate-900">{TABS.find(t => t.id === activeAdminTab)?.label}</h1>
-                 <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest hidden md:block">Gestão em tempo real</p>
+                 <h1 className="font-display text-lg md:text-xl font-semibold tracking-tight text-ink-900">{TABS.find(t => t.id === activeAdminTab)?.label}</h1>
+                 <p className="text-[10px] font-medium text-ink-400 hidden md:block">Gestão em tempo real</p>
                </div>
             </div>
 
-            <button onClick={refreshAdminData} disabled={isAdminRefreshing} className={`flex items-center gap-2 px-4 py-3 md:px-6 md:py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${isAdminRefreshing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-800 hover:shadow-xl'}`}>
-                <svg className={`w-4 h-4 ${isAdminRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            <button onClick={refreshAdminData} disabled={isAdminRefreshing} className={`flex items-center gap-2 px-4 py-2.5 md:px-5 md:py-2.5 bg-brand-600 text-white rounded-xl text-[11px] font-semibold uppercase tracking-wide transition-all shadow-sm active:scale-[0.97] ${isAdminRefreshing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-brand-700'}`}>
+                <RefreshCw className={`w-4 h-4 ${isAdminRefreshing ? 'animate-spin' : ''}`} strokeWidth={2.25} />
                 <span className="hidden md:inline">Sincronizar</span>
             </button>
          </header>
