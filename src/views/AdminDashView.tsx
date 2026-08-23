@@ -593,7 +593,7 @@ export default function AdminDashView(props: AdminDashViewProps) {
                   {BOARD_COLUMNS.map(col => {
                     const colOrders = searchedOrders.filter(o => o.status === col.status);
                     return (
-                      <div key={col.status} className="w-[300px] shrink-0 bg-black/[0.02] rounded-[20px] p-3 flex flex-col max-h-[calc(100vh-330px)]">
+                      <div key={col.status} className="w-[300px] shrink-0 bg-black/[0.02] rounded-[20px] p-3 flex flex-col max-h-[calc(100vh-230px)]">
                         <div className="flex items-center gap-2 px-2 py-2 mb-1">
                           <span className={`w-2 h-2 rounded-full ${col.dot}`} />
                           <h4 className="text-[12px] font-semibold text-ink-700">{col.label}</h4>
