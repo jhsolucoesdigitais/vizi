@@ -135,6 +135,21 @@ export function useAuthHandlers({
         const savedUser = localStorage.getItem('maxi_user_v3');
 
         if (savedUser) {
+          // Confirma que a sessão do Supabase Auth (usada pelo RLS em toda escrita,
+          // como criar pedido) ainda é válida — getSession() já tenta renovar via
+          // refresh token sozinho. Se mesmo assim vier vazia, o "logado" salvo no
+          // localStorage é uma ilusão: melhor mandar pro login de novo do que deixar
+          // o morador preencher um pedido que nunca vai ser gravado.
+          const { data: { session } } = await supabase.auth.getSession();
+
+          if (!session) {
+            localStorage.removeItem('maxi_user_v3');
+            if (storeIdParam) setPendingStoreId(storeIdParam);
+            setView('login');
+            setIsInitialLoading(false);
+            return;
+          }
+
           const parsed = JSON.parse(savedUser);
           setUser(parsed);
 

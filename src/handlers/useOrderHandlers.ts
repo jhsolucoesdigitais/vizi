@@ -171,6 +171,23 @@ export function useOrderHandlers({
   const finalizeOrder = async () => {
     if (!user || !selectedBusiness) return;
 
+    // ── 0. Confirma que a sessão ainda é válida ───
+    // Sem isso, o INSERT do pedido é barrado pelo RLS (userId = current_usuario_id(),
+    // que depende de auth.uid()) e falhava em silêncio — o app seguia como se o
+    // pedido tivesse sido enviado. getSession() já tenta renovar via refresh token.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Sessão expirada',
+        text: 'Sua sessão expirou. Faça login novamente para continuar.',
+        confirmButtonText: 'Entendi',
+      });
+      localStorage.removeItem('maxi_user_v3');
+      setView('login');
+      return;
+    }
+
     // ── 1. Validação de estoque (server-side) ────
     const inventoryUpdates: { id: string; quantity: number }[] = [];
 
@@ -298,7 +315,8 @@ export function useOrderHandlers({
     try {
       // ── 4. Atualiza estoque ───────────────────────
       for (const up of inventoryUpdates) {
-        await supabase.rpc('decrement_product_stock', { input_product_id: up.id, input_qty: up.quantity });
+        const { error: stockError } = await supabase.rpc('decrement_product_stock', { input_product_id: up.id, input_qty: up.quantity });
+        if (stockError) throw stockError;
       }
 
       // ── 5. Calcula pontos ganhos ──────────────────
@@ -335,10 +353,12 @@ export function useOrderHandlers({
         observation:   formValues.observation,
       };
 
-      await supabase.from('pedidos').insert(order);
+      const { error: insertError } = await supabase.from('pedidos').insert(order);
+      if (insertError) throw insertError;
 
       // ── 7. Atualiza pontos do usuário (recalculado no servidor via RPC) ──
-      const { data: newPoints } = await supabase.rpc('apply_checkout_loyalty', { input_order_id: orderId });
+      const { data: newPoints, error: loyaltyError } = await supabase.rpc('apply_checkout_loyalty', { input_order_id: orderId });
+      if (loyaltyError) throw loyaltyError;
       const updatedUser = { ...user, points: newPoints || user.points };
       setUser(updatedUser);
       localStorage.setItem('maxi_user_v3', JSON.stringify(updatedUser));
@@ -412,10 +432,26 @@ export function useOrderHandlers({
         }
       });
 
-    } catch (error) {
+    } catch (error: any) {
       setIsGlobalLoading(false);
       console.error(error);
-      Swal.fire('Erro', 'Houve uma falha ao processar o pedido.', 'error');
+
+      if (error?.code === '42501' || error?.code === 'PGRST301') {
+        // Sessão expirou entre a confirmação e o envio — orienta o morador a
+        // logar de novo em vez de deixar parecer que o pedido foi enviado.
+        Swal.fire({
+          icon: 'warning',
+          title: 'Sessão expirada',
+          text: 'Sua sessão expirou durante o envio. Faça login novamente e tente enviar o pedido de novo.',
+          confirmButtonText: 'Entendi',
+        }).then(() => {
+          localStorage.removeItem('maxi_user_v3');
+          setView('login');
+        });
+        return;
+      }
+
+      Swal.fire('Erro', 'Houve uma falha ao processar o pedido. Tente novamente.', 'error');
     }
   };
 
