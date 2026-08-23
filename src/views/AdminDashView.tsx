@@ -1637,7 +1637,7 @@ export default function AdminDashView(props: AdminDashViewProps) {
                 type="button"
                 onClick={() => {
                   const slug = adminCondo?.slug || new URLSearchParams(window.location.search).get('c') || 'maxi';
-                  window.open(`/?c=${slug}&storeId=${adminBusiness.id}`, '_blank');
+                  window.open(`/?c=${slug}&storeId=${adminBusiness.slug || adminBusiness.id}`, '_blank');
                 }}
                 className="bg-white text-ink-700 px-5 py-3 rounded-xl font-semibold text-[11px] uppercase tracking-wide shadow-sm hover:bg-black/[0.03] active:scale-[0.97] transition-all flex items-center justify-center gap-2 shrink-0"
               >

@@ -234,7 +234,7 @@ export function useAdminData({
       if (target === 'all' || target === 'config' || target === 'avaliacoes') {
         const { data: biz, error: bizError } = await supabase
           .from('empresas')
-          .select('id, name, category, subCategory, rating, image, bannerUrl, businessHours, status, loyalty, pagamento, social, reviews, condominioId, email, licenseStatus, tipoPlano, description, "categoryOrder"').eq('id', adminBusiness.id)
+          .select('id, slug, name, category, subCategory, rating, image, bannerUrl, businessHours, status, loyalty, pagamento, social, reviews, condominioId, email, licenseStatus, tipoPlano, description, "categoryOrder"').eq('id', adminBusiness.id)
           .single();
 
         if (biz && !bizError) {

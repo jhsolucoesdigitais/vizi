@@ -122,7 +122,7 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
     // Adicionamos dataVencimento na busca
     const { data, error } = await supabase
       .from('empresas')
-      .select('id, name, category, status, condominioId, email, licenseStatus, tipoPlano, dataVencimento, auth_user_id')
+      .select('id, slug, name, category, status, condominioId, email, licenseStatus, tipoPlano, dataVencimento, auth_user_id')
       .eq('condominioId', condoId);
     if (!error) setCondoStores(data || []);
   };
@@ -168,6 +168,8 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
       const licenseStatus  = fd.get('licenseStatus') as string;
       const dataVencimento = (fd.get('dataVencimento') as string) || null;
 
+      const newSlug = (fd.get('slug') as string || '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+
       const updated = {
         ...editingStore,
         name:          fd.get('name') as string,
@@ -176,13 +178,19 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
         tipoPlano,
         licenseStatus,
         dataVencimento,
+        slug:          newSlug || null,
       };
 
       // Campos operacionais: o próprio lojista também pode editar essas colunas.
-      await supabase
+      const { error: updateError } = await supabase
         .from('empresas')
-        .update({ name: updated.name, email: newEmail, category: updated.category })
+        .update({ name: updated.name, email: newEmail, category: updated.category, slug: updated.slug })
         .eq('id', editingStore.id);
+
+      if (updateError) {
+        Swal.fire('Erro ao salvar', updateError.code === '23505' ? 'Este slug já está em uso por outra loja neste condomínio.' : updateError.message, 'error');
+        return;
+      }
 
       // Cobrança/licença: só o master admin pode mexer — via RPC dedicada.
       await supabase.rpc('admin_update_business_billing', {
@@ -207,6 +215,8 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
       const businessId = crypto.randomUUID();
       const email       = fd.get('email') as string;
       const tempPass    = fd.get('tempPass') as string;
+      const rawSlug     = (fd.get('slug') as string || fd.get('name') as string || '').trim().toLowerCase();
+      const slug        = rawSlug.replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || null;
 
       const newStore: Business = {
         id:           businessId,
@@ -226,6 +236,7 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
         email,
         licenseStatus: 'active',
         dataVencimento: fd.get('dataVencimento') as string || null,
+        slug,
       };
       // INSERT puro (não upsert): um upsert vira "INSERT ... ON CONFLICT DO UPDATE" no Postgres,
       // que exige privilégio de UPDATE em todas as colunas do SET mesmo sem conflito real — e
@@ -233,7 +244,7 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
       // a RPC admin_update_business_billing, nunca por UPDATE direto na tabela.
       const { error: insertError } = await supabase.from('empresas').insert(newStore);
       if (insertError) {
-        Swal.fire('Erro ao criar loja', insertError.message, 'error');
+        Swal.fire('Erro ao criar loja', insertError.code === '23505' ? 'Este slug já está em uso por outra loja neste condomínio.' : insertError.message, 'error');
         return;
       }
 
@@ -302,6 +313,13 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
       : `${window.location.origin}/?c=${slug}&portal=business`;
     navigator.clipboard.writeText(url);
     Swal.fire({ toast: true, position: 'top-end', title: 'Link copiado!', showConfirmButton: false, timer: 1500, icon: 'success' });
+  };
+
+  const copyStoreLink = (store: Business) => {
+    if (!selectedCondo) return;
+    const url = `${window.location.origin}/?c=${selectedCondo.slug}&storeId=${store.slug || store.id}`;
+    navigator.clipboard.writeText(url);
+    Swal.fire({ toast: true, position: 'top-end', title: 'Link da loja copiado!', showConfirmButton: false, timer: 1500, icon: 'success' });
   };
 
   // Filtros de busca
@@ -380,6 +398,11 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
                 <div className="col-span-2">
                   <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Nome da Loja</label>
                   <input name="name" required defaultValue={editingStore?.name} className="w-full border p-3 rounded-xl font-bold bg-slate-50" />
+                </div>
+                <div className="col-span-2">
+                  <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Slug (link da loja)</label>
+                  <input name="slug" placeholder="ex: climasafe" defaultValue={editingStore?.slug || ''} className="w-full border p-3 rounded-xl font-bold bg-slate-50 lowercase" />
+                  <p className="text-[9px] font-bold text-slate-400 mt-1 ml-1">Deixe em branco para usar o ID interno no link. Só letras minúsculas, números e hífen.</p>
                 </div>
                 <div>
                   <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Categoria</label>
@@ -604,6 +627,13 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => copyStoreLink(store)}
+                            className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl text-[10px] font-black uppercase text-blue-600 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm"
+                            title="Copiar link da loja"
+                          >
+                            <LinkIcon size={12} />
+                          </button>
                           <button
                             onClick={() => handleGenerateBusinessAccess(store)}
                             className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-[10px] font-black uppercase text-amber-700 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all shadow-sm"

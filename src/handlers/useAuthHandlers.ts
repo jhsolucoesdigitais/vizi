@@ -143,7 +143,7 @@ export function useAuthHandlers({
 
           // Redireciona direto para a loja se vier de link compartilhado
           if (storeIdParam) {
-            const sharedStore = allBiz.find(b => b.id === storeIdParam);
+            const sharedStore = allBiz.find(b => b.id === storeIdParam || b.slug === storeIdParam);
             if (sharedStore) {
               setSelectedBusiness(sharedStore);
               setView('business');
@@ -182,7 +182,7 @@ export function useAuthHandlers({
 
     // Redireciona para loja pendente ou dashboard
     if (pendingStoreId) {
-      const biz = businesses.find(b => b.id === pendingStoreId);
+      const biz = businesses.find(b => b.id === pendingStoreId || b.slug === pendingStoreId);
       setSelectedBusiness(biz ?? null);
       setView(biz ? 'business' : 'dashboard');
       setPendingStoreId(null);
@@ -360,7 +360,7 @@ export function useAuthHandlers({
 
     const condoParam = currentCondo?.slug ?? 'vizi';
     const baseUrl    = window.location.origin + window.location.pathname;
-    const shareUrl   = `${baseUrl}?c=${condoParam}&storeId=${business.id}`;
+    const shareUrl   = `${baseUrl}?c=${condoParam}&storeId=${business.slug || business.id}`;
     const shareText  =
       `🏢 *Vendas e Serviços - VIZI*\n\n` +
       `Ei! Olha só que legal essa loja que acabei de encontrar no nosso condomínio: 🛍️✨\n\n` +
