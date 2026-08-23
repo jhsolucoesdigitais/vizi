@@ -248,34 +248,42 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
     loadStores(selectedCondo.id);
   };
 
-  // ── Gerar/renovar acesso de loja já existente sem conta vinculada ──
+  // ── Gerar acesso (loja sem conta) ou resetar senha (loja já com conta) ──
   const handleGenerateBusinessAccess = async (store: Business) => {
     if (!store.email) {
       Swal.fire('Erro', 'Esta loja não tem email cadastrado.', 'error');
       return;
     }
 
+    const hasAccount = !!store.auth_user_id;
+
     const { value: tempPass } = await Swal.fire({
-      title: 'Gerar acesso',
+      title: hasAccount ? 'Resetar senha' : 'Gerar acesso',
       input: 'text',
       inputLabel: `Senha temporária para ${store.email}`,
       inputPlaceholder: 'Digite a senha temporária',
       showCancelButton: true,
-      confirmButtonText: 'Gerar',
+      confirmButtonText: hasAccount ? 'Resetar' : 'Gerar',
     });
     if (!tempPass) return;
 
     const { data: sessionData } = await supabase.auth.getSession();
     const { data: authResult, error: authError } = await supabase.functions.invoke('business-auth-admin', {
-      body: { action: 'create', businessId: store.id, email: store.email, password: tempPass },
+      body: hasAccount
+        ? { action: 'reset_password', businessId: store.id, password: tempPass }
+        : { action: 'create', businessId: store.id, email: store.email, password: tempPass },
       headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
     });
 
     if (authError || authResult?.error) {
-      const message = await getFunctionErrorMessage(authResult, authError, 'Falha ao gerar acesso.');
+      const message = await getFunctionErrorMessage(authResult, authError, 'Falha ao processar.');
       Swal.fire('Erro', message, 'error');
     } else {
-      Swal.fire('Acesso gerado!', `Login: ${store.email}\nSenha temporária: ${tempPass}`, 'success');
+      Swal.fire(
+        hasAccount ? 'Senha redefinida!' : 'Acesso gerado!',
+        `Login: ${store.email}\nSenha temporária: ${tempPass}`,
+        'success'
+      );
     }
   };
 
@@ -588,14 +596,12 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex justify-end gap-2">
-                          {!store.auth_user_id && (
-                            <button
-                              onClick={() => handleGenerateBusinessAccess(store)}
-                              className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-[10px] font-black uppercase text-amber-700 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all shadow-sm"
-                            >
-                              🔑 Gerar Acesso
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleGenerateBusinessAccess(store)}
+                            className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-[10px] font-black uppercase text-amber-700 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all shadow-sm"
+                          >
+                            🔑 {store.auth_user_id ? 'Resetar Senha' : 'Gerar Acesso'}
+                          </button>
                           <button
                             onClick={() => { setEditingStore(store); setIsStoreModalOpen(true); }}
                             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-600 hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all shadow-sm"
