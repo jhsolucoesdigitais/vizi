@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import { supabase } from "../../db";
 import { Business } from '../types';
@@ -17,6 +17,72 @@ interface BusinessPortalProps {
 const BusinessPortal = ({ onLoginSuccess, onBack, currentCondo }: BusinessPortalProps) => {
   const [step, setStep] = useState<'login' | 'change-pass'>('login');
   const [tempBusiness, setTempBusiness] = useState<Business | null>(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // Processa o resultado de get_business_login_status, comum ao login manual
+  // e à restauração silenciosa de sessão já autenticada.
+  const handleLoginStatus = async (result: any, { silent }: { silent: boolean }) => {
+    if (result.status === 'erro') {
+      await supabase.auth.signOut();
+      if (!silent) Swal.fire('Acesso Negado', result.mensagem, 'error');
+      return false;
+    }
+
+    if (result.status === 'bloqueado') {
+      await supabase.auth.signOut();
+      if (!silent) Swal.fire({ title: 'Acesso Suspenso', text: result.mensagem, icon: 'error', confirmButtonColor: '#ef4444' });
+      return false;
+    }
+
+    if (result.status === 'vencido') {
+      await supabase.auth.signOut();
+      if (!silent) Swal.fire({ title: 'Plano Expirado', text: result.mensagem, icon: 'warning', confirmButtonColor: '#f59e0b' });
+      return false;
+    }
+
+    if (result.status === 'liberado') {
+      const { data: safeBusiness, error: fetchError } = await supabase
+        .from('empresas')
+        .select('id, slug, name, category, subCategory, rating, image, bannerUrl, businessHours, status, loyalty, pagamento, social, reviews, condominioId, email, licenseStatus, tipoPlano, description, dataVencimento')
+        .eq('id', result.businessId)
+        .single();
+
+      if (fetchError || !safeBusiness) {
+        if (!silent) { await supabase.auth.signOut(); Swal.fire('Erro', 'Falha ao carregar perfil seguro.', 'error'); }
+        return false;
+      }
+
+      if (result.mustChangePassword) {
+        setTempBusiness(safeBusiness as Business);
+        setStep('change-pass');
+      } else {
+        onLoginSuccess(safeBusiness as Business);
+      }
+      return true;
+    }
+
+    return false;
+  };
+
+  // ── Restaura sessão já autenticada (refresh de página / reabrir o link) ──
+  // Evita pedir login de novo quando o lojista já tem uma sessão válida do
+  // Supabase Auth — getSession() tenta renovar via refresh token sozinho.
+  useEffect(() => {
+    const restoreSession = async () => {
+      if (!currentCondo) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setCheckingSession(false); return; }
+
+      const { data: result, error } = await supabase.rpc('get_business_login_status', {
+        input_condominio: currentCondo.id
+      });
+
+      if (error || !result) { setCheckingSession(false); return; }
+      await handleLoginStatus(result, { silent: true });
+      setCheckingSession(false);
+    };
+    restoreSession();
+  }, [currentCondo]);
 
   // ── 1. Login ─────────────────────────────────
   const handleLogin = async (e: React.FormEvent) => {
@@ -44,55 +110,7 @@ const BusinessPortal = ({ onLoginSuccess, onBack, currentCondo }: BusinessPortal
       return;
     }
 
-    if (result.status === 'erro') {
-      await supabase.auth.signOut();
-      Swal.fire('Acesso Negado', result.mensagem, 'error');
-      return;
-    }
-
-    if (result.status === 'bloqueado') {
-      await supabase.auth.signOut();
-      Swal.fire({
-        title: 'Acesso Suspenso',
-        text: result.mensagem,
-        icon: 'error',
-        confirmButtonColor: '#ef4444'
-      });
-      return;
-    }
-
-    if (result.status === 'vencido') {
-      await supabase.auth.signOut();
-      Swal.fire({
-        title: 'Plano Expirado',
-        text: result.mensagem,
-        icon: 'warning',
-        confirmButtonColor: '#f59e0b'
-      });
-      return;
-    }
-
-    // Tudo Liberado! Busca apenas os dados públicos e entra na loja
-    if (result.status === 'liberado') {
-      const { data: safeBusiness, error: fetchError } = await supabase
-        .from('empresas')
-        .select('id, slug, name, category, subCategory, rating, image, bannerUrl, businessHours, status, loyalty, pagamento, social, reviews, condominioId, email, licenseStatus, tipoPlano, description, dataVencimento')
-        .eq('id', result.businessId)
-        .single();
-
-      if (fetchError || !safeBusiness) {
-        await supabase.auth.signOut();
-        Swal.fire('Erro', 'Falha ao carregar perfil seguro.', 'error');
-        return;
-      }
-
-      if (result.mustChangePassword) {
-        setTempBusiness(safeBusiness as Business);
-        setStep('change-pass');
-      } else {
-        onLoginSuccess(safeBusiness as Business);
-      }
-    }
+    await handleLoginStatus(result, { silent: false });
   };
 
   // ── 2. Primeiro acesso — troca de senha ──────
@@ -126,6 +144,15 @@ const BusinessPortal = ({ onLoginSuccess, onBack, currentCondo }: BusinessPortal
     Swal.fire('Sucesso!', 'Senha alterada. Você já está logado.', 'success');
     onLoginSuccess(tempBusiness);
   };
+
+  // ── Tela: verificando sessão existente ──────
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   // ── Tela: primeiro acesso ────────────────────
   if (step === 'change-pass') {
