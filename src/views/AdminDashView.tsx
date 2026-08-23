@@ -372,9 +372,11 @@ export default function AdminDashView(props: AdminDashViewProps) {
 
               {/* CONTEÚDO (Fica opaco se for vitrine) */}
               <div className={isVitrine ? 'opacity-20 grayscale pointer-events-none select-none' : ''}>
-                 <DashboardAdminView 
+                 <DashboardAdminView
                     adminBusiness={adminBusiness}
                     adminCondo={adminCondo}
+                    adminProducts={adminProducts}
+                    setActiveAdminTab={setActiveAdminTab}
                  />
               </div>
            </div>
