@@ -350,6 +350,19 @@ export default function DashboardView({
               )}
             </div>
           </section>
+
+          {/* ── RODAPÉ ──────────────────────── */}
+          <footer className="px-5 md:px-8 pt-8 pb-6 flex flex-col items-center gap-3">
+            <img src="/assets/web-app-manifest-512x512.png" alt="VIZI" className="w-9 h-9 object-contain opacity-80" />
+            <a
+              href="https://jhsolucoesdigitais.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] font-medium text-ink-400 hover:text-ink-600 transition-colors text-center"
+            >
+              Desenvolvido por <span className="font-semibold">JHS Soluções Digitais LTDA</span>
+            </a>
+          </footer>
         </main>
 
         {/* ── BOTÃO DE CARRINHO FLUTUANTE (Inferior) ──────────────── */}
