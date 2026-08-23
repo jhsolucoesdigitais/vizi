@@ -5,6 +5,7 @@ import { dbInstance } from "../../db";
 import { User, Business, CartItem, Order } from '../types';
 import { Condominio } from '../types';
 import { encryptData } from '../utils/crypto';
+import { identifyResident, clearResidentIdentity, requestPushPermission } from '../utils/onesignal';
 import { ViewType } from './useAppState';
 
 // ─────────────────────────────────────────────
@@ -152,6 +153,7 @@ export function useAuthHandlers({
 
           const parsed = JSON.parse(savedUser);
           setUser(parsed);
+          identifyResident(parsed.id);
 
           const orders = await fetchOrdersByApartment(parsed.block, parsed.floor, parsed.apartment);
           setUserOrders(orders);
@@ -191,6 +193,8 @@ export function useAuthHandlers({
   const finalizeLogin = async (userData: User) => {
     setUser(userData);
     localStorage.setItem('maxi_user_v3', JSON.stringify(userData));
+    identifyResident(userData.id);
+    requestPushPermission();
 
     const orders = await fetchOrdersByApartment(userData.block, userData.floor, userData.apartment);
     setUserOrders(orders);
@@ -319,6 +323,7 @@ export function useAuthHandlers({
       if (result.isConfirmed) {
         localStorage.removeItem('maxi_user_v3');
         supabase.auth.signOut();
+        clearResidentIdentity();
         setUser(null);
         setCart([]);
         setView('login');

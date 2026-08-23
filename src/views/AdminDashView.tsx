@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Business, Product, Order, OrderStatus, BusinessHours, PaymentMethod } from '../types';
 import { Condominio } from '../types';
 import { ViewType, AdminTab, TimeFilter } from '../hooks/useAppState';
@@ -177,18 +177,29 @@ function formatElapsed(createdAt: number): string {
   return `há ${days}d`;
 }
 
-function OrderCard({ order, adminBusiness, props, compact }: {
+function OrderCard({ order, adminBusiness, props, compact, draggable, onViewDetails, bare }: {
   order: Order;
   adminBusiness: Business;
   props: AdminDashViewProps;
   compact: boolean;
+  draggable?: boolean;
+  onViewDetails?: (order: Order) => void;
+  bare?: boolean;
 }) {
   const isService = adminBusiness.category === 'service';
   const accent = ORDER_ACCENT[order.status] || 'border-ink-900';
   const isOpen = order.status !== 'concluido' && order.status !== 'cancelado';
 
   return (
-    <div className={`bg-white rounded-[20px] shadow-sm border-l-4 ${accent} ${compact ? 'p-4' : 'p-5'} transition-all`}>
+    <div
+      draggable={draggable}
+      onDragStart={draggable ? (e) => {
+        e.dataTransfer.setData('text/plain', JSON.stringify({ id: order.id, status: order.status }));
+        e.dataTransfer.effectAllowed = 'move';
+      } : undefined}
+      className={bare ? '' : `bg-white rounded-[20px] shadow-sm border-l-4 ${accent} ${compact ? 'p-4' : 'p-5'} transition-all ${draggable ? 'cursor-grab active:cursor-grabbing' : ''}`}
+    >
+      {!bare && (
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="min-w-0">
           <span className="text-[10px] font-medium text-ink-400 block mb-0.5">#{order.id}</span>
@@ -201,10 +212,12 @@ function OrderCard({ order, adminBusiness, props, compact }: {
           </span>
         )}
       </div>
+      )}
 
       <div className="flex items-center justify-between gap-2 mb-3">
         <span className="text-[10px] font-medium text-ink-400">
           {order.createdAt ? new Date(order.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'}
+          {bare && isOpen && <span className="text-accent-600 font-semibold ml-1.5">· {formatElapsed(order.createdAt)}</span>}
         </span>
         <div className="flex flex-wrap items-center justify-end gap-1">
           <StatusBadge status={order.status} category={adminBusiness.category} />
@@ -223,9 +236,19 @@ function OrderCard({ order, adminBusiness, props, compact }: {
         </div>
       )}
       {compact && (
-        <p className="text-[11px] font-medium text-ink-500 mb-3 truncate">
-          {order.items.length}x item{order.items.length !== 1 ? 's' : ''} · R$ {order.total.toFixed(2)}
-        </p>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <p className="text-[11px] font-medium text-ink-500 truncate">
+            {order.items.length}x item{order.items.length !== 1 ? 's' : ''} · R$ {order.total.toFixed(2)}
+          </p>
+          {onViewDetails && (
+            <button
+              onClick={() => onViewDetails(order)}
+              className="shrink-0 text-[10px] font-semibold text-brand-600 bg-brand-50 px-2.5 py-1 rounded-lg hover:bg-brand-100 transition-colors"
+            >
+              Ver Pedido
+            </button>
+          )}
+        </div>
       )}
 
       {!compact && order.observation && (
@@ -303,6 +326,8 @@ export default function AdminDashView(props: AdminDashViewProps) {
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [reviewSearchTerm, setReviewSearchTerm] = useState('');
   const [reviewRatingFilter, setReviewRatingFilter] = useState<number | 'todos'>('todos');
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
 
 
   // Função para abrir/fechar as categorias
@@ -593,7 +618,34 @@ export default function AdminDashView(props: AdminDashViewProps) {
                   {BOARD_COLUMNS.map(col => {
                     const colOrders = searchedOrders.filter(o => o.status === col.status);
                     return (
-                      <div key={col.status} className="w-[300px] shrink-0 bg-black/[0.02] rounded-[20px] p-3 flex flex-col max-h-[calc(100vh-230px)]">
+                      <div
+                        key={col.status}
+                        onDragOver={(e) => { e.preventDefault(); setDragOverColumn(col.status); }}
+                        onDragLeave={() => setDragOverColumn(prev => prev === col.status ? null : prev)}
+                        onDrop={async (e) => {
+                          e.preventDefault();
+                          setDragOverColumn(null);
+                          let payload: { id: string; status: OrderStatus };
+                          try { payload = JSON.parse(e.dataTransfer.getData('text/plain')); } catch { return; }
+                          if (!payload?.id || payload.status === col.status) return;
+
+                          const draggedOrder = adminOrders.find(o => o.id === payload.id);
+                          const fromLabel = BOARD_COLUMNS.find(c => c.status === payload.status)?.label || payload.status;
+                          const result = await Swal.fire({
+                            title: 'Mover pedido?',
+                            html: `Mover o pedido <b>#${payload.id}</b>${draggedOrder ? ` de <b>${draggedOrder.userName}</b>` : ''} de <b>${fromLabel}</b> para <b>${col.label}</b>?`,
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonText: 'Mover',
+                            cancelButtonText: 'Cancelar',
+                            confirmButtonColor: '#0d7d75',
+                          });
+                          if (result.isConfirmed) {
+                            props.handleAdminUpdateStatus(payload.id, col.status);
+                          }
+                        }}
+                        className={`w-[300px] shrink-0 rounded-[20px] p-3 flex flex-col max-h-[calc(100vh-230px)] transition-colors ${dragOverColumn === col.status ? 'bg-brand-50 ring-2 ring-brand-300' : 'bg-black/[0.02]'}`}
+                      >
                         <div className="flex items-center gap-2 px-2 py-2 mb-1">
                           <span className={`w-2 h-2 rounded-full ${col.dot}`} />
                           <h4 className="text-[12px] font-semibold text-ink-700">{col.label}</h4>
@@ -601,7 +653,7 @@ export default function AdminDashView(props: AdminDashViewProps) {
                         </div>
                         <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 px-0.5 pb-1">
                           {colOrders.map(order => (
-                            <OrderCard key={order.id} order={order} adminBusiness={adminBusiness} props={props} compact />
+                            <OrderCard key={order.id} order={order} adminBusiness={adminBusiness} props={props} compact draggable onViewDetails={setViewingOrder} />
                           ))}
                           {colOrders.length === 0 && (
                             <div className="py-10 text-center text-ink-400/60 text-[11px] font-medium">Nenhum pedido</div>
@@ -1863,6 +1915,47 @@ export default function AdminDashView(props: AdminDashViewProps) {
 
 </div>
          </div>
+
+        {/* ── MODAL: VER PEDIDO (detalhes completos a partir da esteira) ── */}
+        <AnimatePresence>
+          {viewingOrder && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-ink-900/55 backdrop-blur-md"
+              onClick={() => setViewingOrder(null)}
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 24, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 16, scale: 0.98 }}
+                transition={{ type: 'spring', duration: 0.35, bounce: 0.15 }}
+                className="relative w-full sm:max-w-md max-h-[88vh] bg-white rounded-t-[28px] sm:rounded-[28px] shadow-xl overflow-hidden flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div className={`shrink-0 flex items-start justify-between gap-3 p-6 border-l-4 ${ORDER_ACCENT[viewingOrder.status] || 'border-ink-900'} bg-black/[0.015]`}>
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-medium text-ink-400 block mb-0.5">Pedido #{viewingOrder.id}</span>
+                    <h3 className="font-display text-lg font-semibold text-ink-900 truncate">{viewingOrder.userName}</h3>
+                    <p className="text-[11px] font-medium text-ink-400">{viewingOrder.userTag}</p>
+                  </div>
+                  <button onClick={() => setViewingOrder(null)} className="shrink-0 w-9 h-9 rounded-full bg-black/[0.04] hover:bg-black/[0.08] flex items-center justify-center text-ink-500 transition-colors">
+                    <XIcon className="w-4 h-4" strokeWidth={2.25} />
+                  </button>
+                </div>
+
+                {/* Corpo (rola se o pedido tiver muitos itens) */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-4">
+                  <OrderCard order={viewingOrder} adminBusiness={adminBusiness} props={props} compact={false} bare />
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
 		 {/* ── BANNER DE INSTALAÇÃO DO LOJISTA AQUI NO TOPO DA ROLAGEM ── */}
  <InstallBanner currentCondo={adminCondo} />
 
