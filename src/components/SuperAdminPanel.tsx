@@ -227,7 +227,15 @@ const SuperAdminPanel = ({ onBack }: SuperAdminPanelProps) => {
         licenseStatus: 'active',
         dataVencimento: fd.get('dataVencimento') as string || null,
       };
-      await dbInstance.put('empresas', newStore);
+      // INSERT puro (não upsert): um upsert vira "INSERT ... ON CONFLICT DO UPDATE" no Postgres,
+      // que exige privilégio de UPDATE em todas as colunas do SET mesmo sem conflito real — e
+      // colunas de billing (email, licenseStatus, dataVencimento) só podem ser alteradas via
+      // a RPC admin_update_business_billing, nunca por UPDATE direto na tabela.
+      const { error: insertError } = await supabase.from('empresas').insert(newStore);
+      if (insertError) {
+        Swal.fire('Erro ao criar loja', insertError.message, 'error');
+        return;
+      }
 
       // Cria a conta de acesso (Supabase Auth) da loja via Edge Function privilegiada
       const { data: sessionData } = await supabase.auth.getSession();
