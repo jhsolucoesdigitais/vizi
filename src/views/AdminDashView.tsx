@@ -11,7 +11,7 @@ import DashboardAdminView from './DashboardAdminView';
 import InstallBanner from '../components/InstallBanner';
 import {
   LayoutDashboard, ClipboardList, Store, Star, Users, BarChart3, Settings,
-  RefreshCw, Menu as MenuIcon, X as XIcon, LogOut,
+  RefreshCw, Menu as MenuIcon, X as XIcon, LogOut, Megaphone,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────
@@ -328,6 +328,10 @@ export default function AdminDashView(props: AdminDashViewProps) {
   const [reviewRatingFilter, setReviewRatingFilter] = useState<number | 'todos'>('todos');
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
+  const [promoEligibleCount, setPromoEligibleCount] = useState<number | null>(null);
+  const [promoTitle, setPromoTitle] = useState('');
+  const [promoMessage, setPromoMessage] = useState('');
+  const [sendingPromo, setSendingPromo] = useState(false);
 
 
   // Função para abrir/fechar as categorias
@@ -392,6 +396,13 @@ export default function AdminDashView(props: AdminDashViewProps) {
     }
   }, [activeAdminTab]);
 
+  useEffect(() => {
+    if (activeAdminTab === 'notificacoes' && adminBusiness?.condominioId) {
+      supabase.rpc('get_condo_push_enabled_count', { input_condominio_id: adminBusiness.condominioId })
+        .then(({ data }) => { if (typeof data === 'number') setPromoEligibleCount(data); });
+    }
+  }, [activeAdminTab, adminBusiness?.condominioId]);
+
   const pendingCount  = adminOrders.filter(o => o.status === 'pendente').length;
   const isVitrine     = adminBusiness.tipoPlano === 'vitrine';
   const isService     = adminBusiness.category === 'service';
@@ -403,6 +414,7 @@ export default function AdminDashView(props: AdminDashViewProps) {
     { id: 'avaliacoes', label: 'Avaliações',   icon: Star            },
     { id: 'clientes',   label: 'Clientes',     icon: Users           },
     { id: 'relatorio',  label: 'Financeiro',   icon: BarChart3       },
+    { id: 'notificacoes', label: 'Notificações', icon: Megaphone     },
     { id: 'config',     label: 'Config',       icon: Settings        },
   ] as const;
 
@@ -1665,6 +1677,105 @@ export default function AdminDashView(props: AdminDashViewProps) {
           </div>
             );
         })()}
+
+        {/* ══════════════════════════════════════════
+            ABA NOTIFICAÇÕES (Promoções via Push)
+        ══════════════════════════════════════════ */}
+        {activeAdminTab === 'notificacoes' && (
+          <div className="max-w-xl space-y-5 animate-in fade-in slide-in-from-bottom-4 pb-20">
+            <div>
+              <h2 className="font-display text-xl font-semibold text-ink-900">Notificações Push</h2>
+              <p className="text-[11px] font-medium text-ink-400">Envie uma promoção ou aviso para os moradores do seu condomínio</p>
+            </div>
+
+            <div className="bg-ink-900 rounded-[24px] p-5 flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center text-white shrink-0">
+                <Megaphone className="w-5 h-5" strokeWidth={2.25} />
+              </div>
+              <div>
+                <p className="font-display text-2xl font-bold text-white tabular-nums leading-none">
+                  {promoEligibleCount === null ? '—' : promoEligibleCount}
+                </p>
+                <p className="text-[11px] font-medium text-white/50 mt-1">
+                  {promoEligibleCount === 1 ? 'morador apto a receber notificação' : 'moradores aptos a receber notificação'}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-[24px] shadow-sm p-6 space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold uppercase tracking-wide text-ink-400 ml-1">Título</label>
+                <input
+                  value={promoTitle}
+                  onChange={(e) => setPromoTitle(e.target.value)}
+                  placeholder="Ex: Promoção especial hoje!"
+                  maxLength={65}
+                  className="w-full bg-black/[0.03] rounded-xl p-3.5 text-sm font-medium outline-none focus:ring-[3px] focus:ring-brand-500/15"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold uppercase tracking-wide text-ink-400 ml-1">Mensagem</label>
+                <textarea
+                  value={promoMessage}
+                  onChange={(e) => setPromoMessage(e.target.value)}
+                  placeholder="Ex: Hoje o brigadeiro está com 20% de desconto! Faça já seu pedido pelo VIZI."
+                  maxLength={180}
+                  className="w-full bg-black/[0.03] rounded-xl p-3.5 text-sm font-medium h-24 resize-none outline-none focus:ring-[3px] focus:ring-brand-500/15"
+                />
+                <p className="text-[10px] font-medium text-ink-400 text-right">{promoMessage.length}/180</p>
+              </div>
+
+              <button
+                onClick={async () => {
+                  if (!promoTitle.trim() || !promoMessage.trim()) {
+                    Swal.fire('Preencha tudo', 'Título e mensagem são obrigatórios.', 'warning');
+                    return;
+                  }
+                  const result = await Swal.fire({
+                    title: 'Enviar notificação?',
+                    html: `Isso vai enviar para <b>${promoEligibleCount ?? 0}</b> ${promoEligibleCount === 1 ? 'morador' : 'moradores'} agora mesmo.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Enviar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#0d7d75',
+                  });
+                  if (!result.isConfirmed) return;
+
+                  setSendingPromo(true);
+                  try {
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    const { data, error } = await supabase.functions.invoke('send-promo-notification', {
+                      body: {
+                        condominioId: adminBusiness.condominioId,
+                        title: promoTitle.trim(),
+                        message: promoMessage.trim(),
+                      },
+                      headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
+                    });
+                    if (error || data?.error) throw new Error(data?.error ? JSON.stringify(data.error) : error?.message);
+
+                    Swal.fire('Enviado!', 'Sua notificação foi disparada.', 'success');
+                    setPromoTitle('');
+                    setPromoMessage('');
+                  } catch (err: any) {
+                    Swal.fire('Erro ao enviar', err?.message || 'Tente novamente.', 'error');
+                  } finally {
+                    setSendingPromo(false);
+                  }
+                }}
+                disabled={sendingPromo || !promoEligibleCount}
+                className="w-full bg-brand-600 text-white py-3.5 rounded-xl font-semibold text-[12px] uppercase tracking-wide shadow-sm hover:bg-brand-700 active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Megaphone className="w-4 h-4" strokeWidth={2.25} />
+                {sendingPromo ? 'Enviando...' : 'Enviar Notificação'}
+              </button>
+              {!promoEligibleCount && (
+                <p className="text-[11px] font-medium text-ink-400 text-center">Nenhum morador ativou notificações ainda neste condomínio.</p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* ══════════════════════════════════════════
             ABA CONFIGURAÇÕES

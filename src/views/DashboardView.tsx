@@ -188,7 +188,7 @@ export default function DashboardView({
 
           {/* ── CONVITE PARA ATIVAR NOTIFICAÇÕES ──────────────────────── */}
           <div className="px-5 md:px-8 pt-5">
-            <NotificationPrompt />
+            <NotificationPrompt userId={user.id} />
           </div>
 
           {/* ── BANNER PARCEIRO ──────────────────────── */}

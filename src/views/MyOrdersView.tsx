@@ -61,7 +61,7 @@ export default function MyOrdersView({ user, userOrders, businesses, setView }: 
       </header>
 
       <div className="p-5 space-y-4 max-w-2xl mx-auto">
-        <NotificationPrompt />
+        <NotificationPrompt userId={user.id} />
 
         {/* Card da Unidade */}
         <div className="bg-white p-5 rounded-[24px] border border-black/[0.05] shadow-sm flex items-center gap-4">

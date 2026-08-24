@@ -3,6 +3,8 @@
 // assim que o SDK real terminar de carregar, então tudo aqui é assíncrono
 // e nunca falha mesmo se o script ainda não tiver chegado.
 
+import { supabase } from '../../db';
+
 declare global {
   interface Window {
     OneSignalDeferred?: Array<(OneSignal: any) => void | Promise<void>>;
@@ -31,6 +33,29 @@ export function clearResidentIdentity() {
   withOneSignal(async (OneSignal) => {
     await OneSignal.logout();
   });
+}
+
+/**
+ * Marca o dispositivo com o condomínio do morador — é essa tag que permite ao
+ * lojista disparar uma promoção só pros moradores do próprio condomínio (via
+ * filtro de tag na API da OneSignal), sem vazar pra moradores de outro lugar.
+ */
+export function tagResidentCondo(condominioId: string) {
+  if (!condominioId) return;
+  withOneSignal(async (OneSignal) => {
+    await OneSignal.User.addTag('condominioId', condominioId);
+  });
+}
+
+/**
+ * Sincroniza usuarios.push_enabled com o estado real da permissão do navegador.
+ * Chamar após conceder a permissão e também no boot do app (idempotente),
+ * pra manter a contagem de "aptos a receber" no painel do lojista correta.
+ */
+export function syncPushEnabledFlag(userId: string) {
+  if (!userId) return;
+  const granted = getNotificationPermission() === 'granted';
+  supabase.from('usuarios').update({ push_enabled: granted }).eq('id', userId).then(() => {});
 }
 
 /** Pede permissão de notificação ao navegador (só funciona por gesto do usuário em alguns navegadores). */

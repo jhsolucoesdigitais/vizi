@@ -25,7 +25,8 @@ export type AdminTab =
   | 'relatorio'
   | 'config'
   | 'avaliacoes'
-  | 'clientes';
+  | 'clientes'
+  | 'notificacoes';
 
 export type TimeFilter = 'today' | 'week' | 'month' | 'all';
 
