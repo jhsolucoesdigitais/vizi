@@ -478,10 +478,12 @@ export default function AdminDashView(props: AdminDashViewProps) {
          {/* Footer da Sidebar */}
          <div className="p-5 border-t border-white/10">
            <button
-             onClick={() => {
+             onClick={async () => {
                // Pega o slug do condomínio atual (ex: 'maxi') para manter na URL
                const slug = adminCondo?.slug || new URLSearchParams(window.location.search).get('c') || 'maxi';
-               // Força o redirecionamento limpando a memória
+               // Encerra a sessão de verdade antes de voltar pro portal — sem isso,
+               // a restauração silenciosa de sessão do BusinessPortal loga de volta sozinho.
+               await supabase.auth.signOut();
                window.location.href = `/?c=${slug}&portal=business`;
              }}
              className="w-full flex items-center justify-center gap-2.5 px-4 py-3.5 rounded-xl bg-white/5 text-white/60 hover:text-white hover:bg-red-500/90 font-semibold text-[12px] uppercase tracking-wide transition-all duration-150 active:scale-[0.98]"
