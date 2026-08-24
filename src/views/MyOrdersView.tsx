@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Swal from 'sweetalert2';
 import { User, Business, ViewType } from '../types';
 import { StatusBadge, PaymentStatusBadge } from '../components/shared';
 import NotificationPrompt from '../components/NotificationPrompt';
+import { CreditCard } from 'lucide-react';
+import { supabase } from '../../db';
 
 interface MyOrdersViewProps {
   user: User;
@@ -11,7 +14,26 @@ interface MyOrdersViewProps {
 }
 
 export default function MyOrdersView({ user, userOrders, businesses, setView }: MyOrdersViewProps) {
-  
+  const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
+
+  const handlePayOnline = async (orderId: string) => {
+    setPayingOrderId(orderId);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke('create-payment-link', {
+        body: { orderIds: [orderId], redirectUrl: window.location.href },
+        headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message);
+      window.open(data.url, '_blank');
+    } catch (err: any) {
+      Swal.fire('Erro ao gerar pagamento', err?.message || 'Tente novamente.', 'error');
+    } finally {
+      setPayingOrderId(null);
+    }
+  };
+
+
   // ── LÓGICA DE FILTRO INFALÍVEL COM DATAS FORMATADAS ───────────────────────────
   const filteredOrders = userOrders.filter(o => {
     // 1. Pegamos a data de hoje no formato do Brasil (ex: "17/03/2026")
@@ -92,6 +114,10 @@ export default function MyOrdersView({ user, userOrders, businesses, setView }: 
               // Verifica o tempo de finalização correto
               const finishTime = o.finishedAt?.seconds ? o.finishedAt.seconds * 1000 : (o.finishedAt || o.updatedAt);
 
+              const orderBusiness = businesses.find(b => b.id === o.businessId);
+              const canPayOnline = !!orderBusiness?.infinitepay_enabled && !statusStr.includes('cancel') &&
+                (o.paymentStatus === 'pendente' || statusStr === 'entregue_aguardando_pagamento');
+
               return (
                 <div key={o.id} className="bg-white p-5 rounded-[24px] shadow-sm border border-black/[0.05] space-y-3.5 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="flex justify-between items-start border-b border-black/[0.05] pb-3.5">
@@ -148,6 +174,17 @@ export default function MyOrdersView({ user, userOrders, businesses, setView }: 
                       </p>
                     </div>
                   </div>
+
+                  {canPayOnline && (
+                    <button
+                      onClick={() => handlePayOnline(o.id)}
+                      disabled={payingOrderId === o.id}
+                      className="w-full bg-brand-600 text-white py-3 rounded-xl font-semibold text-[11px] uppercase tracking-wide shadow-sm hover:bg-brand-700 active:scale-[0.97] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                    >
+                      <CreditCard className="w-4 h-4" strokeWidth={2.25} />
+                      {payingOrderId === o.id ? 'Gerando link...' : 'Pagar Online'}
+                    </button>
+                  )}
                 </div>
               );
             })

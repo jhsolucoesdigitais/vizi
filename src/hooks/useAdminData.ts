@@ -148,10 +148,10 @@ export function useAdminData({
             .from('pedidos')
       
             .select(`
-              id, businessId, userId, userTag, userName, items, 
-              total, discount, pointsEarned, status, createdAt, 
-              paymentStatus, paymentMethod, observation, 
-              condominioId, finishedAt
+              id, businessId, userId, userTag, userName, items,
+              total, discount, pointsEarned, status, createdAt,
+              paymentStatus, paymentMethod, observation,
+              condominioId, finishedAt, paid_online, payment_receipt_url
             `)
             .eq('businessId', idParaBuscar)
             .or(`createdAt.gte.${inicioDoDia},and(status.neq.concluido,status.neq.cancelado)`)
@@ -181,10 +181,10 @@ export function useAdminData({
         .from('pedidos')
         // OTIMIZAÇÃO: Selecionando apenas o necessário para cálculos e tabela financeira
         .select(`
-          id, businessId, userId, userTag, userName, items, 
-          total, discount, pointsEarned, status, createdAt, 
-          paymentStatus, paymentMethod, observation, 
-          condominioId, finishedAt
+          id, businessId, userId, userTag, userName, items,
+          total, discount, pointsEarned, status, createdAt,
+          paymentStatus, paymentMethod, observation,
+          condominioId, finishedAt, paid_online, payment_receipt_url
         `, { count: 'exact' })
         .eq('businessId', adminBusiness.id)
         .eq('condominioId', adminBusiness.condominioId)
@@ -234,7 +234,7 @@ export function useAdminData({
       if (target === 'all' || target === 'config' || target === 'avaliacoes') {
         const { data: biz, error: bizError } = await supabase
           .from('empresas')
-          .select('id, slug, name, category, subCategory, rating, image, bannerUrl, businessHours, status, loyalty, pagamento, social, reviews, condominioId, email, licenseStatus, tipoPlano, description, "categoryOrder"').eq('id', adminBusiness.id)
+          .select('id, slug, name, category, subCategory, rating, image, bannerUrl, businessHours, status, loyalty, pagamento, social, reviews, condominioId, email, licenseStatus, tipoPlano, description, "categoryOrder", infinitepay_handle, infinitepay_enabled').eq('id', adminBusiness.id)
           .single();
 
         if (biz && !bizError) {
@@ -258,7 +258,7 @@ export function useAdminData({
       if (target === 'all' || target === 'relatorio') {
         const { data: orders, error } = await supabase
           .from('pedidos')
-          .select('id, businessId, userId, userTag, userName, items, total, discount, pointsEarned, status, createdAt, paymentStatus, paymentMethod, observation, condominioId, finishedAt')
+          .select('id, businessId, userId, userTag, userName, items, total, discount, pointsEarned, status, createdAt, paymentStatus, paymentMethod, observation, condominioId, finishedAt, paid_online, payment_receipt_url')
           .eq('businessId', adminBusiness.id);
 
         if (!error && orders) {

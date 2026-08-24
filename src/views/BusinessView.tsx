@@ -3,8 +3,9 @@ import { User, Business, Product, CartItem, Review } from '../types';
 import { ViewType } from '../hooks/useAppState';
 import { Stars, isStoreCurrentlyOpen } from '../components/shared';
 import { ProductDetailModal, StoreProductList } from '../components/StoreProducts';
-import { ChevronLeft, Share2, Heart, Star, MessageSquare, Info, Smartphone, Instagram, Facebook, Copy, ShieldAlert, ArrowLeft, Store, Globe } from 'lucide-react';
+import { ChevronLeft, Share2, Heart, Star, MessageSquare, Info, Smartphone, Instagram, Facebook, Copy, ShieldAlert, ArrowLeft, Store, Globe, Search, X as XIcon, CreditCard } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { supabase } from '../../db';
  
 // ─────────────────────────────────────────────
 //  Tipos Alinhados com o App.tsx
@@ -14,6 +15,7 @@ interface BusinessViewProps {
   user:                 User | null;
   selectedBusiness:     Business;
   allProducts?:         Product[];
+  userOrders?:          any[];
   cart:                 CartItem[];
   appliedLoyalty?:      any;
   setAppliedLoyalty?:   any;
@@ -109,14 +111,18 @@ function AboutModal({ business, onClose }: { business: Business; onClose: () => 
 export default function BusinessView({
   user, selectedBusiness, cart, productDetailModal, showAboutModal,
   setView, setProductDetailModal, setShowAboutModal, onAddToCart,
-  onToggleFavorite, onAddReview, handleAddReview, onShareStore, onClearCart, onFinalizeOrder, onRefreshOrders
+  onToggleFavorite, onAddReview, handleAddReview, onShareStore, onClearCart, onFinalizeOrder, onRefreshOrders,
+  userOrders,
 }: BusinessViewProps) {
 
   // 👇 VERIFICAÇÃO DE VITRINE E ESTADO DA ABA
   const isVitrine = selectedBusiness?.tipoPlano === 'vitrine';
-  
+
   // Se for vitrine, força a aba a ser 'avaliacoes' logo de início
   const [activeTab, setActiveTab] = useState<'produtos' | 'avaliacoes'>(isVitrine ? 'avaliacoes' : 'produtos');
+  const [showPendingModal, setShowPendingModal] = useState(false);
+  const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
+  const [payingOnline, setPayingOnline] = useState(false);
 
   // Garante que, se a loja mudar, a aba se ajuste
   useEffect(() => {
@@ -124,12 +130,31 @@ export default function BusinessView({
     else setActiveTab('produtos');
   }, [isVitrine, selectedBusiness?.id]);
 
+  // Atualiza os pedidos do morador ao abrir a loja — sem isso, o cartão de
+  // "Pagamento Pendente" podia ficar com dado desatualizado (userOrders só
+  // era refrescado em outras telas, nunca ao entrar direto numa loja).
+  useEffect(() => {
+    onRefreshOrders?.();
+  }, [selectedBusiness?.id]);
+
   const bizPoints    = user?.points?.[selectedBusiness.id] || 0;
   const hasReward    = selectedBusiness.loyalty?.ativo && bizPoints >= selectedBusiness.loyalty.metaPontos;
   const isOpen       = isStoreCurrentlyOpen(selectedBusiness);
   const isFavorited  = user?.favorites?.includes(selectedBusiness.id) ?? false;
   const cartTotal    = cart.reduce((a, i) => a + (i.product.price * i.quantity), 0);
   const reviews      = parseReviews(selectedBusiness.reviews);
+
+  const pendingOrders = (userOrders || []).filter(o =>
+    o.businessId === selectedBusiness.id &&
+    o.status !== 'cancelado' &&
+    (o.paymentStatus === 'pendente' || o.status === 'entregue_aguardando_pagamento')
+  );
+  const pendingTotal = pendingOrders.reduce((acc, o) => acc + (o.total || 0), 0);
+
+  // Ao abrir o modal, marca todos os pedidos em aberto por padrão (o morador desmarca se quiser pagar só alguns).
+  useEffect(() => {
+    if (showPendingModal) setSelectedPendingIds(pendingOrders.map(o => o.id));
+  }, [showPendingModal]);
 
   const hasWhatsapp  = !!selectedBusiness.social?.whatsapp?.trim();
   const hasInstagram = !!selectedBusiness.social?.instagram?.trim();
@@ -196,6 +221,100 @@ export default function BusinessView({
 
       {showAboutModal && (
         <AboutModal business={selectedBusiness} onClose={() => setShowAboutModal(false)} />
+      )}
+
+      {showPendingModal && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-ink-900/55 backdrop-blur-md" onClick={() => setShowPendingModal(false)}>
+          <div className="w-full sm:max-w-md max-h-[85vh] bg-white rounded-t-[28px] sm:rounded-[28px] shadow-xl overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="shrink-0 flex items-center justify-between gap-3 p-5 border-b border-black/[0.05]">
+              <div>
+                <h3 className="font-display text-lg font-semibold text-ink-900">Pedidos em Aberto</h3>
+                <p className="text-[11px] font-medium text-ink-400">{selectedBusiness.name}</p>
+              </div>
+              <button onClick={() => setShowPendingModal(false)} className="w-9 h-9 rounded-full bg-black/[0.04] hover:bg-black/[0.08] flex items-center justify-center text-ink-500 transition-colors">
+                <XIcon className="w-4 h-4" strokeWidth={2.25} />
+              </button>
+            </div>
+            {selectedBusiness.infinitepay_enabled && (
+              <p className="shrink-0 px-5 pt-3 text-[10px] font-medium text-ink-400">Marque os pedidos que deseja pagar agora online.</p>
+            )}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-3">
+              {pendingOrders.map((o) => {
+                const isSelected = selectedPendingIds.includes(o.id);
+                const toggle = () => setSelectedPendingIds(prev => isSelected ? prev.filter(id => id !== o.id) : [...prev, o.id]);
+                return (
+                <div
+                  key={o.id}
+                  onClick={selectedBusiness.infinitepay_enabled ? toggle : undefined}
+                  className={`bg-red-50/60 rounded-2xl p-4 flex items-start gap-3 transition-all ${selectedBusiness.infinitepay_enabled ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-brand-400' : ''}`}
+                >
+                  {selectedBusiness.infinitepay_enabled && (
+                    <div className={`shrink-0 mt-0.5 w-5 h-5 rounded-md flex items-center justify-center border-2 transition-all ${isSelected ? 'bg-brand-600 border-brand-600' : 'border-black/15 bg-white'}`}>
+                      {isSelected && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[10px] font-medium text-ink-400">#{String(o.id).substring(0, 8)} · {new Date(o.createdAt).toLocaleDateString('pt-BR')}</span>
+                      <span className="text-[13px] font-display font-bold text-red-600 tabular-nums">R$ {o.total.toFixed(2)}</span>
+                    </div>
+                    <div className="space-y-1">
+                      {o.items?.map((it: any, idx: number) => (
+                        <p key={idx} className="text-[12px] font-medium text-ink-700">
+                          <b className="text-ink-900">{it.quantity}x</b> {it.product.name}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                );
+              })}
+            </div>
+            <div className="shrink-0 p-5 border-t border-black/[0.05] space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-500">
+                  {selectedBusiness.infinitepay_enabled ? 'Total Selecionado' : 'Total Devido'}
+                </span>
+                <span className="font-display text-xl font-bold text-red-600 tabular-nums">
+                  R$ {(selectedBusiness.infinitepay_enabled
+                    ? pendingOrders.filter(o => selectedPendingIds.includes(o.id)).reduce((acc, o) => acc + o.total, 0)
+                    : pendingTotal
+                  ).toFixed(2)}
+                </span>
+              </div>
+              {selectedBusiness.infinitepay_enabled && (
+                <button
+                  onClick={async () => {
+                    if (selectedPendingIds.length === 0) {
+                      Swal.fire('Selecione ao menos um pedido', '', 'warning');
+                      return;
+                    }
+                    setPayingOnline(true);
+                    try {
+                      const { data: sessionData } = await supabase.auth.getSession();
+                      const { data, error } = await supabase.functions.invoke('create-payment-link', {
+                        body: { orderIds: selectedPendingIds, redirectUrl: window.location.href },
+                        headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
+                      });
+                      if (error || data?.error) throw new Error(data?.error || error?.message);
+                      window.open(data.url, '_blank');
+                      setShowPendingModal(false);
+                    } catch (err: any) {
+                      Swal.fire('Erro ao gerar pagamento', err?.message || 'Tente novamente.', 'error');
+                    } finally {
+                      setPayingOnline(false);
+                    }
+                  }}
+                  disabled={payingOnline || selectedPendingIds.length === 0}
+                  className="w-full bg-brand-600 text-white py-3.5 rounded-xl font-semibold text-[12px] uppercase tracking-wide shadow-sm hover:bg-brand-700 active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <CreditCard className="w-4 h-4" strokeWidth={2.25} />
+                  {payingOnline ? 'Gerando link...' : 'Pagar Online'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Só renderiza o modal de produtos se NÃO for vitrine */}
@@ -273,6 +392,21 @@ export default function BusinessView({
                   {selectedBusiness.status.mensagemAusencia || 'Fechado no momento.'}
                 </p>
               </div>
+            )}
+
+            {pendingTotal > 0 && (
+              <button
+                onClick={() => setShowPendingModal(true)}
+                className="mt-4 w-full bg-red-50 p-3.5 rounded-xl flex items-center justify-between gap-3 active:scale-[0.98] transition-all"
+              >
+                <div className="text-left">
+                  <p className="text-[9px] font-semibold uppercase tracking-widest text-red-500 leading-none mb-1">Pagamento Pendente</p>
+                  <p className="text-base font-display font-bold text-red-600 tabular-nums">R$ {pendingTotal.toFixed(2)}</p>
+                </div>
+                <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                  <Search className="w-4 h-4" strokeWidth={2.25} />
+                </div>
+              </button>
             )}
 
             {/* Fidelidade: Ocultado se for vitrine */}

@@ -65,6 +65,8 @@ export interface Business {
     whatsapp: string;
     website?: string;
   };
+  infinitepay_handle?: string;
+  infinitepay_enabled?: boolean;
   
   condominioId?: string;
   email?: string;
@@ -113,6 +115,8 @@ export interface Order {
   paymentStatus: 'pago' | 'pendente';
   paymentMethod?: PaymentMethod;
   observation?: string;
+  paid_online?: boolean;
+  payment_receipt_url?: string;
 }
 
 export interface User {

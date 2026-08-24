@@ -221,7 +221,17 @@ function OrderCard({ order, adminBusiness, props, compact, draggable, onViewDeta
         </span>
         <div className="flex flex-wrap items-center justify-end gap-1">
           <StatusBadge status={order.status} category={adminBusiness.category} />
-          <PaymentStatusBadge status={order.paymentStatus} />
+          {order.paid_online && order.payment_receipt_url ? (
+            <button
+              onClick={() => window.open(order.payment_receipt_url, '_blank')}
+              className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-brand-100 text-brand-700 hover:bg-brand-200 transition-colors whitespace-nowrap"
+              title="Ver comprovante do pagamento online"
+            >
+              Pago Online · Ver Comprovante
+            </button>
+          ) : (
+            <PaymentStatusBadge status={order.paymentStatus} />
+          )}
         </div>
       </div>
 
@@ -272,7 +282,7 @@ function OrderCard({ order, adminBusiness, props, compact, draggable, onViewDeta
           </button>
         ) : (
           <>
-            {order.paymentStatus === 'pendente' && order.status !== 'cancelado' && order.status !== 'concluido' && (
+            {!order.paid_online && order.paymentStatus === 'pendente' && order.status !== 'cancelado' && order.status !== 'concluido' && (
               <button onClick={() => props.onUpdatePayment(order.id, 'pago')} className="bg-emerald-600 text-white py-2.5 rounded-xl font-semibold text-[10px] uppercase tracking-wide active:scale-[0.97] transition-all">Baixar Pagamento</button>
             )}
             {order.status === 'pendente' && (
@@ -332,6 +342,9 @@ export default function AdminDashView(props: AdminDashViewProps) {
   const [promoTitle, setPromoTitle] = useState('');
   const [promoMessage, setPromoMessage] = useState('');
   const [sendingPromo, setSendingPromo] = useState(false);
+  const [testingInfinitePay, setTestingInfinitePay] = useState(false);
+  const [infinitepayHandleInput, setInfinitepayHandleInput] = useState('');
+  const [infinitepayEnabled, setInfinitepayEnabled] = useState(false);
 
 
   // Função para abrir/fechar as categorias
@@ -383,7 +396,9 @@ export default function AdminDashView(props: AdminDashViewProps) {
       setLoyaltyPointMode(adminBusiness.loyalty?.tipoPontuacao || 'por_valor');
       setIsStoreOpenConfig(adminBusiness.status?.aberto || false);
       setWhatsappValue(adminBusiness.social?.whatsapp || '');
-      
+      setInfinitepayHandleInput(adminBusiness.infinitepay_handle || '');
+      setInfinitepayEnabled(adminBusiness.infinitepay_enabled || false);
+
       if (adminBusiness.businessHours) {
         setBusinessHoursConfig(adminBusiness.businessHours);
       }
@@ -1649,9 +1664,19 @@ export default function AdminDashView(props: AdminDashViewProps) {
                               <option value="concluido">Concluído</option>
                               <option value="cancelado">❌ Cancelar Pedido</option>
                             </select>
-                            <button onClick={() => handleAdminUpdatePaymentStatus(o.id, o.paymentStatus === 'pago' ? 'pendente' : 'pago')} className="transition-transform active:scale-95 hover:opacity-80">
-                              <PaymentStatusBadge status={o.paymentStatus} />
-                            </button>
+                            {o.paid_online ? (
+                              <button
+                                onClick={() => o.payment_receipt_url && window.open(o.payment_receipt_url, '_blank')}
+                                className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-brand-100 text-brand-700 hover:bg-brand-200 transition-colors whitespace-nowrap"
+                                title="Pago online — status travado, não pode ser revertido"
+                              >
+                                Pago Online · Ver Comprovante
+                              </button>
+                            ) : (
+                              <button onClick={() => handleAdminUpdatePaymentStatus(o.id, o.paymentStatus === 'pago' ? 'pendente' : 'pago')} className="transition-transform active:scale-95 hover:opacity-80">
+                                <PaymentStatusBadge status={o.paymentStatus} />
+                              </button>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-5 text-right">
@@ -1902,6 +1927,98 @@ export default function AdminDashView(props: AdminDashViewProps) {
                       <div className="py-2 text-center rounded-xl bg-black/[0.03] text-ink-400 text-[10px] font-semibold uppercase peer-checked:bg-ink-900 peer-checked:text-white transition-all">{m.label}</div>
                     </label>
                   ))}
+                </div>
+                <div className="p-4 rounded-2xl bg-brand-50/60 border border-brand-100 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] font-semibold text-ink-900">Pagamento Online (InfinitePay)</p>
+                      <p className="text-[10px] font-medium text-ink-400">{infinitepayEnabled ? 'Ativo — moradores podem pagar pedidos online' : 'Desativado'}</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={infinitepayEnabled}
+                        onChange={async (e) => {
+                          const next = e.target.checked;
+                          if (next && !adminBusiness.infinitepay_handle) {
+                            Swal.fire('Configure o handle primeiro', 'Valide e salve seu handle da InfinitePay antes de ativar.', 'warning');
+                            return;
+                          }
+                          setInfinitepayEnabled(next);
+                          const { error } = await supabase.from('empresas').update({ infinitepay_enabled: next }).eq('id', adminBusiness.id);
+                          if (error) {
+                            setInfinitepayEnabled(!next);
+                            Swal.fire('Erro', 'Não foi possível salvar.', 'error');
+                          } else {
+                            setAdminBusiness({ ...adminBusiness, infinitepay_enabled: next });
+                          }
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-black/15 rounded-full peer peer-checked:bg-brand-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full" />
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase tracking-wide text-brand-700 ml-1">Handle InfinitePay</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex-1 relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400 font-semibold text-sm">$</span>
+                        <input
+                          value={infinitepayHandleInput}
+                          onChange={(e) => setInfinitepayHandleInput(e.target.value)}
+                          placeholder="seunome"
+                          className="w-full bg-white rounded-xl pl-8 pr-4 py-3 text-xs font-semibold outline-none focus:ring-[3px] focus:ring-brand-500/15 transition-all"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const handle = infinitepayHandleInput.trim().replace(/^\$/, '');
+                          if (!handle) {
+                            Swal.fire('Handle vazio', 'Digite seu @ da InfinitePay antes de validar.', 'warning');
+                            return;
+                          }
+                          setTestingInfinitePay(true);
+                          try {
+                            // Valida o handle chamando a InfinitePay ANTES de salvar qualquer coisa
+                            // no banco — assim nunca gravamos uma tag inválida.
+                            const { data: sessionData } = await supabase.auth.getSession();
+                            const { data, error } = await supabase.functions.invoke('create-payment-link', {
+                              body: { mode: 'test', businessId: adminBusiness.id, handle, redirectUrl: window.location.href },
+                              headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
+                            });
+                            if (error || data?.error) throw new Error(data?.error || error?.message || 'Handle inválido ou não encontrado na InfinitePay.');
+
+                            const { error: saveError } = await supabase.from('empresas').update({ infinitepay_handle: handle }).eq('id', adminBusiness.id);
+                            if (saveError) throw new Error(saveError.message);
+                            setAdminBusiness({ ...adminBusiness, infinitepay_handle: handle });
+
+                            const testResult = await Swal.fire({
+                              title: 'Handle válido!',
+                              text: 'Handle salvo com sucesso. Deseja realizar um teste de cobrança de R$ 1,00 agora, pra confirmar que está recebendo certo?',
+                              icon: 'success',
+                              showCancelButton: true,
+                              confirmButtonText: 'Sim, testar R$1',
+                              cancelButtonText: 'Agora não',
+                            });
+                            if (testResult.isConfirmed) window.open(data.url, '_blank');
+                          } catch (err: any) {
+                            Swal.fire('Handle inválido', err?.message || 'Verifique o handle e tente de novo. Nada foi salvo.', 'error');
+                          } finally {
+                            setTestingInfinitePay(false);
+                          }
+                        }}
+                        disabled={testingInfinitePay}
+                        className="shrink-0 px-4 py-3 rounded-xl bg-brand-600 text-white text-[10px] font-semibold uppercase tracking-wide hover:bg-brand-700 active:scale-[0.97] transition-all disabled:opacity-60"
+                      >
+                        {testingInfinitePay ? 'Validando...' : 'Validar e Salvar'}
+                      </button>
+                    </div>
+                    <p className="text-[10px] font-medium text-ink-400 mt-1.5 ml-1">
+                      Seu @ da InfinitePay (sem o $). Só é salvo depois de confirmado que existe de verdade — nada é gravado se o handle estiver errado.
+                    </p>
+                  </div>
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-semibold uppercase tracking-wide text-ink-400 ml-1">WhatsApp de Atendimento</label>

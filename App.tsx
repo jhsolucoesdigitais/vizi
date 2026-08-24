@@ -334,6 +334,7 @@ onRefreshOrders={async () => {
             user={customerData.user}
             selectedBusiness={appState.selectedBusiness}
             allProducts={customerData.allProducts}
+            userOrders={customerData.userOrders}
             cart={appState.cart}
             appliedLoyalty={appState.appliedLoyalty}
             setAppliedLoyalty={appState.setAppliedLoyalty}
@@ -351,6 +352,16 @@ onRefreshOrders={async () => {
             onShareStore={authHandlers.handleShareStore}
             setView={appState.setView}
 			onAddReview={orderHandlers.handleAddReview}
+            onRefreshOrders={async () => {
+              if (customerData.user) {
+                const orders = await customerData.fetchOrdersByApartment(
+                  customerData.user.block,
+                  customerData.user.floor,
+                  customerData.user.apartment
+                );
+                customerData.setUserOrders(orders);
+              }
+            }}
 	
 			
           />
@@ -380,6 +391,7 @@ onRefreshOrders={async () => {
  
 			adminCondo={adminData.adminCondo || appState.currentCondo}
 			adminBusiness={adminData.adminBusiness}
+			setAdminBusiness={adminData.setAdminBusiness}
 
             // Pedidos
             adminOrders={adminData.adminOrders}

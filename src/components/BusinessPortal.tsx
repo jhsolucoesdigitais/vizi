@@ -43,7 +43,7 @@ const BusinessPortal = ({ onLoginSuccess, onBack, currentCondo }: BusinessPortal
     if (result.status === 'liberado') {
       const { data: safeBusiness, error: fetchError } = await supabase
         .from('empresas')
-        .select('id, slug, name, category, subCategory, rating, image, bannerUrl, businessHours, status, loyalty, pagamento, social, reviews, condominioId, email, licenseStatus, tipoPlano, description, dataVencimento')
+        .select('id, slug, name, category, subCategory, rating, image, bannerUrl, businessHours, status, loyalty, pagamento, social, reviews, condominioId, email, licenseStatus, tipoPlano, description, dataVencimento, infinitepay_handle')
         .eq('id', result.businessId)
         .single();
 
