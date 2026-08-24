@@ -39,3 +39,13 @@ export function requestPushPermission() {
     await OneSignal.Notifications.requestPermission();
   });
 }
+
+/**
+ * Estado atual da permissão de notificação, direto da API nativa do navegador
+ * (não depende do SDK do OneSignal ter carregado, então nunca fica "pendurado").
+ * 'default' = ainda não perguntou, 'granted' = aceitou, 'denied' = bloqueou.
+ */
+export function getNotificationPermission(): NotificationPermission | 'unsupported' {
+  if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
+  return Notification.permission;
+}

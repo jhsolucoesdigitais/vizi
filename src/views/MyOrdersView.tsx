@@ -1,6 +1,7 @@
 import React from 'react';
 import { User, Business, ViewType } from '../types';
 import { StatusBadge, PaymentStatusBadge } from '../components/shared';
+import NotificationPrompt from '../components/NotificationPrompt';
 
 interface MyOrdersViewProps {
   user: User;
@@ -60,6 +61,8 @@ export default function MyOrdersView({ user, userOrders, businesses, setView }: 
       </header>
 
       <div className="p-5 space-y-4 max-w-2xl mx-auto">
+        <NotificationPrompt />
+
         {/* Card da Unidade */}
         <div className="bg-white p-5 rounded-[24px] border border-black/[0.05] shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 bg-brand-600 text-white rounded-2xl flex items-center justify-center font-display font-semibold text-sm shadow-sm shadow-brand-600/25">

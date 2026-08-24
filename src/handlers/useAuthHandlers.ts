@@ -5,7 +5,7 @@ import { dbInstance } from "../../db";
 import { User, Business, CartItem, Order } from '../types';
 import { Condominio } from '../types';
 import { encryptData } from '../utils/crypto';
-import { identifyResident, clearResidentIdentity, requestPushPermission } from '../utils/onesignal';
+import { identifyResident, clearResidentIdentity } from '../utils/onesignal';
 import { ViewType } from './useAppState';
 
 // ─────────────────────────────────────────────
@@ -194,7 +194,6 @@ export function useAuthHandlers({
     setUser(userData);
     localStorage.setItem('maxi_user_v3', JSON.stringify(userData));
     identifyResident(userData.id);
-    requestPushPermission();
 
     const orders = await fetchOrdersByApartment(userData.block, userData.floor, userData.apartment);
     setUserOrders(orders);

@@ -6,6 +6,7 @@ import { isStoreCurrentlyOpen } from '../components/shared';
 import { supabase } from '../../db';
 import { Search, ShoppingCart, LogOut, RefreshCw, ChevronRight, UtensilsCrossed, Wrench, LayoutGrid, ClipboardList, Star } from 'lucide-react';
 import InstallBanner from '../components/InstallBanner';
+import NotificationPrompt from '../components/NotificationPrompt';
 // ─────────────────────────────────────────────
 // Tipos
 // ─────────────────────────────────────────────
@@ -184,6 +185,11 @@ export default function DashboardView({
         </header>
 
         <main className="animate-in fade-in duration-500 overflow-y-auto custom-scrollbar pb-32">
+
+          {/* ── CONVITE PARA ATIVAR NOTIFICAÇÕES ──────────────────────── */}
+          <div className="px-5 md:px-8 pt-5">
+            <NotificationPrompt />
+          </div>
 
           {/* ── BANNER PARCEIRO ──────────────────────── */}
           <div className="px-5 md:px-8 pt-5 pb-2">

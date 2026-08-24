@@ -167,12 +167,37 @@ const { data, error } = await supabase
       .subscribe();
 
     // Canal 2: recarrega pedidos ao receber UPDATE num pedido do usuário
+    // Também mostra um toast na hora, já que notificação push do sistema costuma
+    // não aparecer quando o app já está aberto/em foco (comportamento padrão do
+    // navegador, não é bug) — assim o morador não perde o aviso mesmo assim.
+    const ORDER_STATUS_TOAST: Record<string, string> = {
+      preparando: 'Seu pedido entrou em preparo!',
+      saiu_entrega: 'Seu pedido saiu para entrega!',
+      entregue_aguardando_pagamento: 'Seu pedido foi entregue. Aguardando confirmação de pagamento.',
+      concluido: 'Seu pedido foi concluído. Obrigado pela preferência!',
+      cancelado: 'Seu pedido foi cancelado.',
+    };
+
     const orderSub = supabase
       .channel('sync-orders')
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `userId=eq.${user.id}` },
-        async () => {
+        async (payload) => {
+          const oldStatus = (payload.old as any)?.status;
+          const newStatus = (payload.new as any)?.status;
+          if (newStatus && newStatus !== oldStatus && ORDER_STATUS_TOAST[newStatus]) {
+            Swal.fire({
+              toast: true,
+              position: 'top-end',
+              icon: newStatus === 'cancelado' ? 'error' : 'success',
+              title: ORDER_STATUS_TOAST[newStatus],
+              showConfirmButton: false,
+              timer: 4000,
+              timerProgressBar: true,
+            });
+          }
+
           const orders = await fetchOrdersByApartment(user.block, user.floor, user.apartment);
           setUserOrders(orders);
         },
