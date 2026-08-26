@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Bell, BellOff, Share } from 'lucide-react';
 import { requestPushPermission, getNotificationPermission, syncPushEnabledFlag } from '../utils/onesignal';
 
@@ -24,14 +24,12 @@ function isStandalonePWA(): boolean {
  * o pop-up nativo sozinho; só pede a permissão real quando o morador clica.
  */
 export default function NotificationPrompt({ userId }: NotificationPromptProps) {
-  const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('default');
-  const [dismissed, setDismissed] = useState(false);
+  // Lazy init: lê o estado real (permissão do navegador + dismissal salvo) já no
+  // primeiro render. Se isso ficasse pro useEffect, o banner "Ative as notificações"
+  // pisca na tela antes de sumir pra quem já ativou — sensação de bug/código legado.
+  const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(getNotificationPermission);
+  const [dismissed, setDismissed] = useState(() => sessionStorage.getItem(DISMISS_KEY) === '1');
   const [requesting, setRequesting] = useState(false);
-
-  useEffect(() => {
-    setPermission(getNotificationPermission());
-    setDismissed(sessionStorage.getItem(DISMISS_KEY) === '1');
-  }, []);
 
   if (permission === 'unsupported' || permission === 'granted' || dismissed) return null;
 

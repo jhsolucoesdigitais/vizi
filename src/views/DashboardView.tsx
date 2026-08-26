@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, MotionConfig } from 'framer-motion';
 import { User, Business, Product, CartItem, CategoryType, Condominio } from '../types';
 import { ViewType } from '../hooks/useAppState';
 import { isStoreCurrentlyOpen } from '../components/shared';
@@ -193,31 +193,44 @@ export default function DashboardView({
 
           {/* ── BANNER PARCEIRO ──────────────────────── */}
           <div className="px-5 md:px-8 pt-5 pb-2">
-            <button
-              onClick={() => window.open(window.location.origin, '_blank', 'noopener')}
-              className="w-full bg-ink-900 rounded-3xl px-6 py-5 flex items-center gap-4 overflow-hidden relative shadow-lg text-left active:scale-[0.99] transition-transform duration-150"
-            >
-              <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent-500/20 rounded-full blur-[50px] pointer-events-none" />
-              <div className="absolute -bottom-12 -left-8 w-32 h-32 bg-brand-500/20 rounded-full blur-[45px] pointer-events-none" />
+            <MotionConfig reducedMotion="user">
+              <motion.button
+                onClick={() => window.open(window.location.origin, '_blank', 'noopener')}
+                initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ type: 'spring', duration: 0.5, bounce: 0, delay: 0.15 }}
+                whileHover={{ y: -3 }}
+                whileTap={{ scale: 0.98 }}
+                className="group w-full bg-ink-900 rounded-3xl px-6 py-5 flex items-center gap-4 overflow-hidden relative text-left shadow-lg shadow-ink-900/20 hover:shadow-xl hover:shadow-ink-900/30 transition-shadow duration-300"
+              >
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent-500/20 rounded-full blur-[50px] pointer-events-none" />
+                <div className="absolute -bottom-12 -left-8 w-32 h-32 bg-brand-500/20 rounded-full blur-[45px] pointer-events-none" />
 
-              <div className="relative z-10 flex-1 min-w-0">
-                <span className="text-accent-400 text-[10px] font-bold uppercase tracking-[0.15em]">Seja parceiro</span>
-                <h3 className="font-display text-white text-lg font-semibold tracking-tight leading-snug mt-0.5">
-                  Vende ou presta algum serviço?
-                </h3>
-                {residentCount !== null && residentCount > 0 && (
-                  <p className="text-white/60 text-[11px] font-medium mt-1">
-                    {residentCount} {residentCount === 1 ? 'morador já está' : 'moradores já estão'} no VIZI — leve seu negócio até eles
-                  </p>
-                )}
-                <span className="text-white/80 text-[13px] font-medium mt-2 inline-flex items-center gap-1 group">
-                  Crie sua loja digital <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                </span>
-              </div>
-              <div className="relative z-10 shrink-0 w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-md p-1.5">
-                <img src="/assets/web-app-manifest-512x512.png" alt="VIZI" className="w-full h-full object-contain" />
-              </div>
-            </button>
+                <div className="relative z-10 flex-1 min-w-0">
+                  <span className="text-accent-400 text-[10px] font-bold uppercase tracking-[0.15em]">Seja parceiro</span>
+                  <h3 className="font-display text-white text-lg font-semibold tracking-tight leading-snug mt-0.5">
+                    Vende ou presta algum serviço?
+                  </h3>
+                  {residentCount !== null && residentCount > 0 && (
+                    <p className="text-white/60 text-[11px] font-medium mt-1">
+                      {residentCount} {residentCount === 1 ? 'morador já está' : 'moradores já estão'} no VIZI — leve seu negócio até eles
+                    </p>
+                  )}
+                  <span className="text-white/80 text-[13px] font-medium mt-2 inline-flex items-center gap-1">
+                    Crie sua loja digital <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-200" />
+                  </span>
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', duration: 0.5, bounce: 0.15, delay: 0.4 }}
+                  className="vizi-shine relative z-10 shrink-0 w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-md p-1.5 overflow-hidden"
+                >
+                  <img src="/assets/web-app-manifest-512x512.png" alt="VIZI" className="w-full h-full object-contain" />
+                </motion.div>
+              </motion.button>
+            </MotionConfig>
           </div>
 
           {/* ── FAVORITOS ──────────────────────── */}
