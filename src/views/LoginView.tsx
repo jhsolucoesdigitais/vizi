@@ -17,8 +17,8 @@ interface LoginViewProps {
 //  Máscara de WhatsApp (inline no onChange)
 // ─────────────────────────────────────────────
 
-const applyPhoneMask = (e: React.ChangeEvent<HTMLInputElement>) => {
-  let v = e.target.value.replace(/\D/g, '');
+const formatPhoneDigits = (digits: string) => {
+  let v = digits.replace(/\D/g, '');
   if (v.length > 11) v = v.slice(0, 11);
 
   if (v.length > 10) {
@@ -31,7 +31,32 @@ const applyPhoneMask = (e: React.ChangeEvent<HTMLInputElement>) => {
     v = v.replace(/^(\d*)/, '($1');
   }
 
-  e.target.value = v;
+  return v;
+};
+
+const applyPhoneMask = (e: React.ChangeEvent<HTMLInputElement>) => {
+  e.target.value = formatPhoneDigits(e.target.value);
+};
+
+// ─────────────────────────────────────────────
+//  Último preenchimento salvo (sobrevive ao logout)
+// ─────────────────────────────────────────────
+
+interface LastLoginForm {
+  name:      string;
+  block:     string;
+  floor:     number;
+  apartment: number;
+  whatsapp:  string;
+}
+
+const getLastLoginForm = (): LastLoginForm | null => {
+  try {
+    const raw = localStorage.getItem('vizi_last_login_form');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 };
 
 // ─────────────────────────────────────────────
@@ -39,6 +64,8 @@ const applyPhoneMask = (e: React.ChangeEvent<HTMLInputElement>) => {
 // ─────────────────────────────────────────────
 
 export default function LoginView({ currentCondo, setView, handleLoginSubmit }: LoginViewProps) {
+  const lastForm = getLastLoginForm();
+
   return (
     <div className="min-h-screen bg-ink-900 relative flex items-center justify-center p-6 overflow-hidden font-sans">
 
@@ -78,6 +105,7 @@ export default function LoginView({ currentCondo, setView, handleLoginSubmit }: 
             <input
               name="name"
               required
+              defaultValue={lastForm?.name ?? ''}
               placeholder="Ex: João da Silva"
               className="w-full bg-black/[0.03] border border-transparent text-ink-900 placeholder:text-ink-400 rounded-2xl p-4 focus:outline-none focus:bg-white focus:ring-[3px] focus:ring-brand-500/15 focus:border-brand-200 transition-all font-medium"
             />
@@ -92,6 +120,7 @@ export default function LoginView({ currentCondo, setView, handleLoginSubmit }: 
               </label>
               <select
                 name="block"
+                defaultValue={lastForm?.block}
                 className="w-full bg-black/[0.03] border border-transparent text-ink-900 rounded-2xl p-4 focus:outline-none focus:bg-white focus:ring-[3px] focus:ring-brand-500/15 focus:border-brand-200 transition-all font-medium appearance-none text-center cursor-pointer"
               >
                 {currentCondo && Array.from({ length: currentCondo.settings.quantity }, (_, i) => {
@@ -109,6 +138,7 @@ export default function LoginView({ currentCondo, setView, handleLoginSubmit }: 
               </label>
               <select
                 name="floor"
+                defaultValue={lastForm?.floor}
                 className="w-full bg-black/[0.03] border border-transparent text-ink-900 rounded-2xl p-4 focus:outline-none focus:bg-white focus:ring-[3px] focus:ring-brand-500/15 focus:border-brand-200 transition-all font-medium appearance-none text-center cursor-pointer"
               >
                 {currentCondo && Array.from({ length: currentCondo.settings.floors + 1 }, (_, i) => (
@@ -123,6 +153,7 @@ export default function LoginView({ currentCondo, setView, handleLoginSubmit }: 
               </label>
               <select
                 name="apartment"
+                defaultValue={lastForm?.apartment}
                 className="w-full bg-black/[0.03] border border-transparent text-ink-900 rounded-2xl p-4 focus:outline-none focus:bg-white focus:ring-[3px] focus:ring-brand-500/15 focus:border-brand-200 transition-all font-medium appearance-none text-center cursor-pointer"
               >
                 {currentCondo?.settings.apartmentsPerFloor.map(apt => (
@@ -141,6 +172,7 @@ export default function LoginView({ currentCondo, setView, handleLoginSubmit }: 
               name="whatsapp"
               type="tel"
               required
+              defaultValue={lastForm ? formatPhoneDigits(lastForm.whatsapp) : ''}
               placeholder="(00) 00000-0000"
               maxLength={15}
               onChange={applyPhoneMask}

@@ -271,6 +271,16 @@ export function useAuthHandlers({
       const inputFloor        = parseInt(fd.get('floor')     as string) || 0;
       const inputApartment    = parseInt(fd.get('apartment') as string) || 0;
 
+      // Guarda os dados preenchidos numa chave separada da sessão (maxi_user_v3),
+      // pra reaproveitar no formulário caso o morador deslogue depois.
+      localStorage.setItem('vizi_last_login_form', JSON.stringify({
+        name:      inputName,
+        block:     inputBlock,
+        floor:     inputFloor,
+        apartment: inputApartment,
+        whatsapp:  rawWhatsApp,
+      }));
+
       // Cria/reaproveita a vaga do apartamento e a conta de acesso (fantasma) vinculada a ela.
       // Identidade = condomínio + unidade, de propósito sem depender do WhatsApp.
       const { data: result, error: fnError } = await supabase.functions.invoke('resident-login', {
