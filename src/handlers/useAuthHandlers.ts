@@ -117,22 +117,6 @@ export function useAuthHandlers({
           return;
         }
 
-        // Carrega empresas e produtos do condomínio em paralelo
-        const [bizRes, prodRes] = await Promise.all([
-          supabase
-            .from('empresas_public')
-            .select('*')
-			.eq('condominioId', condo.id),
-          supabase
-            .from('produtos')
-            .select('*')
-            .eq('condominioId', condo.id),
-        ]);
-
-        const allBiz = bizRes.data || [];
-        setBusinesses(allBiz);
-        setAllProducts(prodRes.data || []);
-
         const savedUser = localStorage.getItem('maxi_user_v3');
 
         if (savedUser) {
@@ -150,6 +134,23 @@ export function useAuthHandlers({
             setIsInitialLoading(false);
             return;
           }
+
+          // Só busca empresas/produtos agora, com a sessão já autenticada —
+          // o RLS exige auth.uid() de um morador do condomínio pra liberar essas linhas.
+          const [bizRes, prodRes] = await Promise.all([
+            supabase
+              .from('empresas_public')
+              .select('*')
+              .eq('condominioId', condo.id),
+            supabase
+              .from('produtos')
+              .select('*')
+              .eq('condominioId', condo.id),
+          ]);
+
+          const allBiz = bizRes.data || [];
+          setBusinesses(allBiz);
+          setAllProducts(prodRes.data || []);
 
           const parsed = JSON.parse(savedUser);
           setUser(parsed);
@@ -173,7 +174,9 @@ export function useAuthHandlers({
 
           setView('dashboard');
         } else {
-          // Usuário não logado: guarda loja pendente para abrir após login
+          // Usuário não logado: guarda loja pendente para abrir após login.
+          // Empresas/produtos não são buscados aqui de propósito — sem sessão
+          // autenticada o RLS não libera essas linhas mesmo (ver my_resident_condo_id()).
           if (storeIdParam) setPendingStoreId(storeIdParam);
           setView('login');
         }
@@ -199,12 +202,32 @@ export function useAuthHandlers({
     if (currentCondo) tagResidentCondo(currentCondo.id);
     syncPushEnabledFlag(userData.id);
 
+    // A sessão do Supabase Auth só existe a partir daqui (verifyOtp já rodou em
+    // handleLoginSubmit) — busca empresas/produtos agora, não antes, porque o RLS
+    // exige auth.uid() de um morador do condomínio pra liberar essas linhas.
+    let freshBusinesses = businesses;
+    if (currentCondo) {
+      const [bizRes, prodRes] = await Promise.all([
+        supabase
+          .from('empresas_public')
+          .select('*')
+          .eq('condominioId', currentCondo.id),
+        supabase
+          .from('produtos')
+          .select('*')
+          .eq('condominioId', currentCondo.id),
+      ]);
+      freshBusinesses = bizRes.data || [];
+      setBusinesses(freshBusinesses);
+      setAllProducts(prodRes.data || []);
+    }
+
     const orders = await fetchOrdersByApartment(userData.block, userData.floor, userData.apartment);
     setUserOrders(orders);
 
     // Redireciona para loja pendente ou dashboard
     if (pendingStoreId) {
-      const biz = businesses.find(b => b.id === pendingStoreId || b.slug === pendingStoreId);
+      const biz = freshBusinesses.find(b => b.id === pendingStoreId || b.slug === pendingStoreId);
       setSelectedBusiness(biz ?? null);
       setView(biz ? 'business' : 'dashboard');
       setPendingStoreId(null);
